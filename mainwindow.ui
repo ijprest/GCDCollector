@@ -92,12 +92,6 @@
            </item>
            <item>
             <widget class="SeriesList" name="comicTitles">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
              <property name="frameShape">
               <enum>QFrame::Box</enum>
              </property>

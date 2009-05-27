@@ -21,8 +21,16 @@ void SeriesDetail::setSeries(int seriesId)
   query.exec(QString("SELECT name, format, year_began, publisher_name FROM core_series WHERE core_series.id = %1;").arg(seriesId));
   if(query.next()) // only expecting one row
   {
-    m_ui->labelName->setText( QString("%1 (%2)").arg(query.value(0).toString(), query.value(2).toString()) );
-    m_ui->labelPublisher->setText( query.value(3).toString() );
-    m_ui->labelFormat->setText( query.value(1).toString() );
+    QString label = QString("%1 (%2)").arg(query.value(0).toString(), query.value(2).toString());
+    m_ui->labelName->setText( label );
+    m_ui->labelName->setToolTip( label );
+
+    QString publisher = query.value(3).toString();
+    m_ui->labelPublisher->setText( publisher );
+    m_ui->labelPublisher->setToolTip( publisher );
+
+    QString format = query.value(1).toString();
+    m_ui->labelFormat->setText( format );
+    m_ui->labelFormat->setToolTip( format );
   }
 }
