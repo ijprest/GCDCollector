@@ -21,8 +21,7 @@ void SeriesList::filterList(const QString& filter)
   model->setHeaderData(1,Qt::Horizontal,tr("Name"));
 
   setModel(model);
-  setColumnHidden(0, true);
-  resizeRowsToContents();
+  setColumnHidden(0, true); // Hide the "id" column
   connect(selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChange(QModelIndex)));
 }
 

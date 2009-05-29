@@ -16,12 +16,8 @@ void IssueList::setSeries(int seriesId)
 {
   if(model) { delete model; model = NULL; }
   model = new QSqlQueryModel;
-  model->setQuery(QString("SELECT Id, (Name||' ('||year_began||')') AS Name FROM core_series WHERE id=%1").arg(seriesId));
-  model->setHeaderData(0,Qt::Horizontal,"Id");
-  model->setHeaderData(1,Qt::Horizontal,tr("Name"));
+  model->setQuery(QString("SELECT Id, Number, key_date, Price, page_count, notes FROM core_issue WHERE series_id=%1 ORDER BY Number").arg(seriesId));
 
   setModel(model);
- // setColumnHidden(0, true);
- // resizeRowsToContents();
- // connect(selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChange(QModelIndex)));
+  setColumnHidden(0, true); // Hide the "id" column
 }
