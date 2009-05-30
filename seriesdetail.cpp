@@ -1,5 +1,4 @@
-#include <QSqlRecord>
-#include <QSqlQuery>
+#include "stdafx.h"
 #include "seriesdetail.h"
 #include "ui_seriesdetail.h"
 

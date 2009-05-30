@@ -1,8 +1,4 @@
-#include <QtGui/QFileDialog>
-#include <QtGui/QMessageBox>
-#include <QSqlDatabase>
-#include <QSqlError>
-#include <QSqlQuery>
+#include "stdafx.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 

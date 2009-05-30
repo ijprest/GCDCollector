@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "serieslist.h"
-#include <QSqlQueryModel>
 
 SeriesList::SeriesList(QWidget* parent)
   : QTableView(parent),

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "issuelist.h"
 #include <QSqlQueryModel>
 
