@@ -9,6 +9,7 @@ ui_*.h
 # Files created by Visual Studio
 *.ncb
 *.vcproj.*.user
+*.suo
 
 # Output Directories
 debug/
