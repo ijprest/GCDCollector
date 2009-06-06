@@ -5,7 +5,8 @@ bool createConnection()
 {
   QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
   db.setDatabaseName("C:\\Workspaces\\ComicCollector\\comix.db"); // TODO: hardcoded location
-  if (!db.open()) {
+  if (!db.open()) 
+	{
     QMessageBox::critical(0, QObject::tr("Database Error"), db.lastError().text());
     return false;
   }

@@ -40,20 +40,25 @@ bool MainWindow::createDatabase(const QString& filename)
   if(!connectDatabase(filename))
     return false;
 
-  QSqlDatabase db = QSqlDatabase::database("document");
-  QSqlQuery("CREATE TABLE issues (id INTEGER PRIMARY KEY NOT NULL, issue_id INTEGER NOT NULL, condition VARCHAR(32), store VARCHAR(32), price DOUBLE, notes VARCHAR);", db).exec();
+	QSqlQuery createTable;
+	createTable.prepare("CREATE TABLE issues (id INTEGER PRIMARY KEY NOT NULL, issue_id INTEGER NOT NULL, condition VARCHAR(32), store VARCHAR(32), price DOUBLE, notes VARCHAR);");
+	if( !createTable.exec() )
+	{
+		QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
+		return false;
+	}
   return true;
 }
 
 bool MainWindow::connectDatabase(const QString& filename)
 {
-  QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "document");
-  db.setDatabaseName(filename);
-  if(!db.open())
-  {
-    QMessageBox::critical(0, QObject::tr("Database Error"), db.lastError().text());
-    return false;
-  }
+	QSqlQuery attach;
+	attach.prepare(QString("ATTACH DATABASE '%1' AS document;").arg(filename));
+	if( !attach.exec() )
+	{
+		QMessageBox::critical(0, tr("Database Error"), attach.lastError().text());
+		return false;
+	}
   setWindowTitle(tr("%1 - Comic Collector").arg(filename));
   return true;
 }
@@ -91,7 +96,13 @@ void MainWindow::openDatabase()
 
 void MainWindow::closeDatabase()
 {
-  QSqlDatabase::removeDatabase("document");
+	QSqlQuery detach;
+	detach.prepare("DETACH DATABASE document;");
+	if( !detach.exec() )
+	{
+		QMessageBox::critical(0, tr("Database Error"), detach.lastError().text());
+		return;
+	}
   setWindowTitle(tr("Comic Collector"));
 }
 
@@ -100,6 +111,7 @@ void MainWindow::addComics()
 	if(!addComicsDialog)
 	{
 		addComicsDialog = new AddComics(this);
+		connect(addComicsDialog, SIGNAL(addItems(QList<int>)), this, SLOT(addItems(QList<int>)));
 	}
 	addComicsDialog->show();
 	addComicsDialog->activateWindow();
@@ -112,4 +124,24 @@ void MainWindow::about()
 				"<p>Copyright &copy; 2009, Ian Prest<br/>All rights reserved.</p>"
 				"<p>This software is licensed under the terms of a modified BSD license; please see <a href='http://wiki.github.com/ijprest/GCDCollector/license'>http://wiki.github.com/ijprest/GCDCollector/license</a> for details.</p>"
 				));
+}
+
+void MainWindow::addItems(const QList<int>& items)
+{
+	QSqlDatabase db = QSqlDatabase::database();
+	if(db.isValid() && db.transaction())
+	{
+		for(QList<int>::const_iterator i = items.begin(); i != items.end(); ++i)
+		{
+			QSqlQuery query(db);
+			query.prepare(QString("INSERT INTO issues(issue_id) VALUES (%1);").arg(*i));
+			if(!query.exec())
+			{
+				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
+				db.rollback();
+				return;
+			}
+		}
+		db.commit();
+	}
 }

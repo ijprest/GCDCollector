@@ -19,6 +19,7 @@ private slots:;
   void newDatabase();
 	void addComics();
 	void about();
+	void addItems(const QList<int>& items);
 
 private:
   bool createDatabase(const QString& filename);

@@ -132,9 +132,6 @@
           </widget>
          </item>
         </layout>
-        <zorder>frame</zorder>
-        <zorder>frame</zorder>
-        <zorder>groupBox_2</zorder>
        </widget>
        <widget class="QGroupBox" name="groupBox_3">
         <property name="sizePolicy">
@@ -207,9 +204,12 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="addSelectedItemsButton">
          <property name="text">
           <string>Add Selected Items...</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
