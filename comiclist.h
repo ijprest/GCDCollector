@@ -1,8 +1,8 @@
 /*SDOC:**********************************************************************
 
-	File:			ComicList.h
+	File:			comiclist.h
 
-	Action:		Declaration of the ComicList object.
+	Action:		Declaration of the ComicList TableView.
 
 	Copyright © 2009, Ian Prest
 	All rights reserved.

@@ -1,6 +1,6 @@
 /*SDOC:**********************************************************************
 
-	File:			ComicList.cpp
+	File:			comiclist.cpp
 
 	Action:		Implementation of the ComicList object.
 
