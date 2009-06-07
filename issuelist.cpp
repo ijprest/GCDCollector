@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "issuelist.h"
-#include <QSqlQueryModel>
 
 IssueList::IssueList(QWidget* parent)
   : QTableView(parent),

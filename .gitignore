@@ -17,6 +17,7 @@ Debug/
 release/
 Release/
 GeneratedFiles/
+Deleted/
 
 # large binaries
 comix.db
