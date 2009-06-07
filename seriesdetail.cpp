@@ -17,7 +17,9 @@ SeriesDetail::~SeriesDetail()
 void SeriesDetail::setSeries(int seriesId)
 {
   QSqlQuery query;
-  query.exec(QString("SELECT name, format, year_began, publisher_name FROM core_series WHERE core_series.id = %1;").arg(seriesId));
+  query.exec(QString("SELECT series.name, series.format, series.year_began, publishers.name "
+										 "FROM series INNER JOIN publishers "
+										 "WHERE publisher_id=publishers.id AND series.id = %1;").arg(seriesId));
   if(query.next()) // only expecting one row
   {
     QString label = QString("%1 (%2)").arg(query.value(0).toString(), query.value(2).toString());

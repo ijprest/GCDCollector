@@ -41,7 +41,7 @@ bool MainWindow::createDatabase(const QString& filename)
     return false;
 
 	QSqlQuery createTable;
-	createTable.prepare("CREATE TABLE issues (id INTEGER PRIMARY KEY NOT NULL, issue_id INTEGER NOT NULL, condition VARCHAR(32), store VARCHAR(32), price DOUBLE, notes VARCHAR);");
+	createTable.prepare("CREATE TABLE document.issues (id INTEGER PRIMARY KEY NOT NULL, issue_id INTEGER NOT NULL, condition VARCHAR(32), store VARCHAR(32), price DOUBLE, notes VARCHAR);");
 	if( !createTable.exec() )
 	{
 		QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
@@ -134,7 +134,7 @@ void MainWindow::addItems(const QList<int>& items)
 		for(QList<int>::const_iterator i = items.begin(); i != items.end(); ++i)
 		{
 			QSqlQuery query(db);
-			query.prepare(QString("INSERT INTO issues(issue_id) VALUES (%1);").arg(*i));
+			query.prepare(QString("INSERT INTO document.issues(issue_id) VALUES (%1);").arg(*i));
 			if(!query.exec())
 			{
 				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());

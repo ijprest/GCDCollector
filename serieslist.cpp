@@ -16,7 +16,7 @@ void SeriesList::filterList(const QString& filter)
 {
   if(model) { delete model; model = NULL; }
   model = new QSqlQueryModel;
-  model->setQuery(QString("SELECT Id, (Name||' ('||year_began||')') AS Name FROM core_series WHERE name LIKE '%%1%' ORDER BY Name").arg(filter));
+  model->setQuery(QString("SELECT Id, (Name||' ('||year_began||')') AS Name FROM series WHERE name LIKE '%%1%' ORDER BY Name").arg(filter));
   model->setHeaderData(0,Qt::Horizontal,"Id");
   model->setHeaderData(1,Qt::Horizontal,tr("Name"));
 
