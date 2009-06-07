@@ -55,8 +55,10 @@ bool MainWindow::createDatabase(const QString& filename)
 												"condition VARCHAR(32), "
 												"store VARCHAR(32), "
 												"price DOUBLE, "
-												"notes VARCHAR"
-											");");
+												"notes VARCHAR, "
+												"owned tinyint(1), "
+												"sold_price DOUBLE, "
+												"user_id VARCHAR(32));");
 	if( !createTable.exec() )
 	{
 		QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
