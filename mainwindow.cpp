@@ -31,6 +31,10 @@ MainWindow::MainWindow(QWidget *parent)
 	// Set the series-list to only show series we own
 	ui->comicTitles->setOnlyShowOwned(true);
 	ui->comicTitles->filterList("");
+
+	// The window icon (used by the about box)
+	QIcon icon(":/GCDCollector/Resources/short-box.png");
+	setWindowIcon(icon);
 }
 
 MainWindow::~MainWindow()
@@ -70,7 +74,7 @@ bool MainWindow::connectDatabase(const QString& filename)
 		QMessageBox::critical(0, tr("Database Error"), attach.lastError().text());
 		return false;
 	}
-  setWindowTitle(tr("%1 - Comic Collector").arg(filename));
+  setWindowTitle(tr("Comic Collector - %1").arg(filename));
   return true;
 }
 

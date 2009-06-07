@@ -1,4 +1,5 @@
 <RCC>
-    <qresource prefix="GCDCollector">
+    <qresource prefix="/GCDCollector" >
+        <file>Resources/short-box.png</file>
     </qresource>
 </RCC>
