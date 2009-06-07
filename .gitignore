@@ -19,5 +19,8 @@ Release/
 GeneratedFiles/
 Deleted/
 
-# large binaries
+# large data files / binaries
+full-2.sql
+sqlite3.exe
+sqlite3_analyzer.exe
 comix.db
