@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_4">
     <item>
-     <widget class="IssueList" name="tableView">
+     <widget class="ComicList" name="tableView">
       <property name="alternatingRowColors">
        <bool>true</bool>
       </property>
@@ -288,12 +288,9 @@
    </slots>
   </customwidget>
   <customwidget>
-   <class>IssueList</class>
+   <class>ComicList</class>
    <extends>QTableView</extends>
-   <header>issuelist.h</header>
-   <slots>
-    <slot>setSeries(int)</slot>
-   </slots>
+   <header>comiclist.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

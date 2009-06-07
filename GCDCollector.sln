@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GCDCollector", "GCDCollector.vcproj", "{ADAA112F-5D91-4D51-82E1-629B58D10726}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DataImport", "DataImport\DataImport.vcproj", "{C0A2A80F-514B-483D-8231-03BCB0B8B9AB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -15,10 +13,6 @@ Global
 		{ADAA112F-5D91-4D51-82E1-629B58D10726}.Debug|Win32.Build.0 = Debug|Win32
 		{ADAA112F-5D91-4D51-82E1-629B58D10726}.Release|Win32.ActiveCfg = Release|Win32
 		{ADAA112F-5D91-4D51-82E1-629B58D10726}.Release|Win32.Build.0 = Release|Win32
-		{C0A2A80F-514B-483D-8231-03BCB0B8B9AB}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C0A2A80F-514B-483D-8231-03BCB0B8B9AB}.Debug|Win32.Build.0 = Debug|Win32
-		{C0A2A80F-514B-483D-8231-03BCB0B8B9AB}.Release|Win32.ActiveCfg = Release|Win32
-		{C0A2A80F-514B-483D-8231-03BCB0B8B9AB}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,7 +17,8 @@ void IssueList::setSeries(int seriesId)
 {
   if(model) { delete model; model = NULL; }
   model = new QSqlQueryModel;
-  model->setQuery(QString("SELECT Id, Number, publication_date, Price, page_count, notes FROM issues WHERE series_id=%1 ORDER BY Number").arg(seriesId));
+  model->setQuery(QString("SELECT Id, Number, publication_date, Price, page_count, notes "
+													"FROM issues WHERE series_id=%1 ORDER BY sort_code").arg(seriesId));
 	model->setHeaderData(0, Qt::Horizontal, "id");
 	model->setHeaderData(1, Qt::Horizontal, tr("Number"));
 	model->setHeaderData(2, Qt::Horizontal, tr("Date"));

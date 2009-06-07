@@ -27,6 +27,10 @@ MainWindow::MainWindow(QWidget *parent)
 			connectDatabase(fileInfo.absoluteFilePath());
 		}
 	}
+
+	// Set the series-list to only show series we own
+	ui->comicTitles->setOnlyShowOwned(true);
+	ui->comicTitles->filterList("");
 }
 
 MainWindow::~MainWindow()
@@ -41,7 +45,14 @@ bool MainWindow::createDatabase(const QString& filename)
     return false;
 
 	QSqlQuery createTable;
-	createTable.prepare("CREATE TABLE document.issues (id INTEGER PRIMARY KEY NOT NULL, issue_id INTEGER NOT NULL, condition VARCHAR(32), store VARCHAR(32), price DOUBLE, notes VARCHAR);");
+	createTable.prepare("CREATE TABLE document.comics ("
+												"id INTEGER PRIMARY KEY NOT NULL, "
+												"issue_id INTEGER NOT NULL, "
+												"condition VARCHAR(32), "
+												"store VARCHAR(32), "
+												"price DOUBLE, "
+												"notes VARCHAR"
+											");");
 	if( !createTable.exec() )
 	{
 		QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
@@ -122,7 +133,9 @@ void MainWindow::about()
 	QMessageBox::about(this, tr("About Comic Collector"), 
 		tr(	"<h2>Comic Collector</h2>"
 				"<p>Copyright &copy; 2009, Ian Prest<br/>All rights reserved.</p>"
-				"<p>This software is licensed under the terms of a modified BSD license; please see <a href='http://wiki.github.com/ijprest/GCDCollector/license'>http://wiki.github.com/ijprest/GCDCollector/license</a> for details.</p>"
+				"<p>This software is licensed under the terms of a modified BSD license; "
+				"please see <a href='http://wiki.github.com/ijprest/GCDCollector/license'>"
+				"http://wiki.github.com/ijprest/GCDCollector/license</a> for details.</p>"
 				));
 }
 
@@ -134,7 +147,7 @@ void MainWindow::addItems(const QList<int>& items)
 		for(QList<int>::const_iterator i = items.begin(); i != items.end(); ++i)
 		{
 			QSqlQuery query(db);
-			query.prepare(QString("INSERT INTO document.issues(issue_id) VALUES (%1);").arg(*i));
+			query.prepare(QString("INSERT INTO document.comics(issue_id) VALUES (%1);").arg(*i));
 			if(!query.exec())
 			{
 				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
@@ -143,5 +156,8 @@ void MainWindow::addItems(const QList<int>& items)
 			}
 		}
 		db.commit();
+
+		// re-filter the main window's series list
+		ui->comicTitles->filterList(ui->filterEdit->text());
 	}
 }

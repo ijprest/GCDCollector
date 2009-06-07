@@ -3,6 +3,7 @@
 
 SeriesList::SeriesList(QWidget* parent)
   : QTableView(parent),
+		onlyShowOwned(false),
     model(NULL)
 {
 }
@@ -16,7 +17,21 @@ void SeriesList::filterList(const QString& filter)
 {
   if(model) { delete model; model = NULL; }
   model = new QSqlQueryModel;
-  model->setQuery(QString("SELECT Id, (Name||' ('||year_began||')') AS Name FROM series WHERE name LIKE '%%1%' ORDER BY Name").arg(filter));
+
+	if(onlyShowOwned)
+	{
+		model->setQuery(QString("SELECT Id, (Name||' ('||year_began||')') AS Name FROM series "
+														"WHERE name LIKE '%%1%' AND id IN ("
+															"SELECT DISTINCT series_id FROM issues WHERE issues.id IN (SELECT issue_id FROM document.comics)"
+														")"
+														"ORDER BY Name").arg(filter));
+	}
+	else
+	{
+		model->setQuery(QString("SELECT Id, (Name||' ('||year_began||')') AS Name FROM series "
+														"WHERE name LIKE '%%1%' "
+														"ORDER BY Name").arg(filter));
+	}
   model->setHeaderData(0,Qt::Horizontal,"Id");
   model->setHeaderData(1,Qt::Horizontal,tr("Name"));
 
