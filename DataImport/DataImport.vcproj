@@ -173,54 +173,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\sql.g.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="LALR&apos;ing $(InputFileName)..."
-						CommandLine="cd /d &quot;$(InputDir)&quot;&#x0D;&#x0A;&quot;C:\Qt\2009.02\qt\bin\qlalr.exe&quot; &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
-						Outputs="sql.h;sql.cpp;sqlparser.cpp;sqlparser_p.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="LALR&apos;ing $(InputFileName)..."
-						CommandLine="cd /d &quot;$(InputDir)&quot;&#x0D;&#x0A;&quot;C:\Qt\2009.02\qt\bin\qlalr.exe&quot; &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
-						Outputs="sql.h;sql.cpp;sqlparser.cpp;sqlparser_p.h"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\sqllexer.y.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Flex&apos;ing $(InputFileName)..."
-						CommandLine="&quot;C:\Qt\re2c.exe&quot; -i -o &quot;$(InputDir)\$(InputName).cpp&quot; &quot;$(InputPath)&quot;&#x0D;&#x0A;"
-						Outputs="&quot;$(InputDir)\$(InputName).cpp&quot;"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Flex&apos;ing $(InputFileName)..."
-						CommandLine="&quot;C:\Qt\re2c.exe&quot; -i -o &quot;$(InputDir)\sqllexer.cpp&quot; &quot;$(InputPath)&quot;&#x0D;&#x0A;"
-						Outputs="&quot;$(InputDir)\sqllexer.cpp&quot;"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -249,63 +201,6 @@
 			<File
 				RelativePath=".\stdafx.h"
 				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Generated Files"
-			Filter="moc;h;cpp"
-			UniqueIdentifier="{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}"
-			SourceControlFiles="false"
-			>
-			<File
-				RelativePath=".\sql.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\sql.h"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\sqllexer.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\sqlparser.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\sqlparser_p.h"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

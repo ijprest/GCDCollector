@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "sql.h"
 
 bool createConnection()
 {
@@ -13,7 +12,7 @@ bool createConnection()
   return true;
 }
 
-bool runQuery(const QString& sql)
+bool doSql(const QString& sql)
 {
 	QSqlQuery query;
 	query.prepare(sql);
@@ -28,14 +27,16 @@ bool runQuery(const QString& sql)
 int main(int argc, char *argv[])
 {
 	QCoreApplication a(argc, argv);
+	if(a.arguments().count() < 2)
+		return 1;
 
 	// Open the database
 	if(!createConnection())
 		return 1;
 
 	// Open the SQL file
-	QFile file("..\\full-2.sql");
-	//QFile file("C:\\Users\\Ian\\Desktop\\foo.txt");
+	QFile file(a.arguments().at(1));
+
 	if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
 		cerr << QObject::tr("Error reading file: %1\n").arg(file.fileName()).toLatin1().data();
@@ -43,10 +44,17 @@ int main(int argc, char *argv[])
 	}
 	cout << QObject::tr("Opened file: %1\n").arg(file.fileName()).toLatin1().data();
 
-	Parser parser(file);
-	if(!parser.parse())
+	int lineno = 0;
+	while(!file.atEnd()) 
 	{
-		cout << QString("%1(%2): %3").arg(file.fileName()).arg(parser.errorLineNumber()).arg(parser.errorMessage()).toLatin1().data() << endl;
+		QString line = QString(file.readLine()).trimmed();
+		if(line.length() > 0) 
+		{
+			if(!doSql(line))
+				cout << "Line " << ++lineno << ": " << line.left(50).toLatin1().data() << endl;
+			else
+				cout << "Line " << ++lineno << "\r";
+		}
 	}
 
 	return 0; //a.exec();
