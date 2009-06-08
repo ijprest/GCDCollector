@@ -54,13 +54,22 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	// Initialize UI
   ui->setupUi(this);
+
+	// File menu
 	connect(ui->action_New, SIGNAL(triggered()), this, SLOT(newDatabase()));
 	connect(ui->action_Open, SIGNAL(triggered()), this, SLOT(openDatabase()));
 	connect(ui->action_Close, SIGNAL(triggered()), this, SLOT(closeDatabase()));
 	connect(ui->action_Exit, SIGNAL(triggered()), this, SLOT(close()));
+	// Edit menu
 	connect(ui->action_AddComics, SIGNAL(triggered()), this, SLOT(addComics()));
-	connect(ui->action_AboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+	// View menu
+	connect(ui->action_ShowOwnedIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowOwned(bool)));
+	connect(ui->action_ShowWantedIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowWanted(bool)));
+	connect(ui->action_ShowSoldIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowSold(bool)));
+	connect(ui->action_ShowUntrackedIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowUntracked(bool)));
+	// Help Menu
 	connect(ui->action_About, SIGNAL(triggered()), this, SLOT(about()));
+	connect(ui->action_AboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 
 	// Handle command-line arguments
 	for(int i = 1; i < QCoreApplication::arguments().size(); ++i)
@@ -108,7 +117,7 @@ bool MainWindow::createDatabase(const QString& filename)
 												"store VARCHAR(32), "
 												"price DOUBLE, "
 												"notes VARCHAR, "
-												"owned tinyint(1), "
+												"owned TINYINT(1) NOT NULL DEFAULT ('false'), "
 												"sold_price DOUBLE, "
 												"user_id VARCHAR(32));");
 	if( !createTable.exec() )

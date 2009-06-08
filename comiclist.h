@@ -48,10 +48,17 @@ public:
 // interface
 public slots:
   void setSeries(int seriesId);
+	void setShowOwned(bool show);
+	void setShowWanted(bool show);
+	void setShowSold(bool show);
+	void setShowUntracked(bool show);
 
 // implementation
 private:
-  QSqlQueryModel* model;
+	void setModel(QAbstractItemModel* model);
+  QAbstractItemModel* model;
+	int seriesId;
+	bool showOwned, showWanted, showSold, showUntracked;
 };
 
 #endif // COMICLIST_H

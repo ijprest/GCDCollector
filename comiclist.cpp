@@ -43,7 +43,7 @@ public:
 	static QString columnNameDb[];
 	static QString columnNameUi[];
 
-	ComicDataModel(int seriesId, QObject *parent = 0);
+	ComicDataModel(int seriesId, bool showOwned, bool showWanted, bool showSold, bool showUntracked, QObject *parent = 0);
 	Qt::ItemFlags flags(const QModelIndex &index) const;
   bool setData(const QModelIndex &index, const QVariant &value, int role);
 	QVariant data(const QModelIndex &index, int role) const;
@@ -84,7 +84,7 @@ QString ComicDataModel::columnNameUi[] =
 	Action:		Constructs the data model & populates it with initial data
 
 **********************************************************************:EDOC*/
-ComicDataModel::ComicDataModel(int seriesId, QObject *parent) 
+ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bool showSold, bool showUntracked, QObject *parent) 
 	: QSqlQueryModel(parent)
 {
 	// Build a list of column names
@@ -93,11 +93,20 @@ ComicDataModel::ComicDataModel(int seriesId, QObject *parent)
 		dbNames.push_back(columnNameDb[i]);
 
 	// Prepare & execute the query
+	QString conditions;
+	if(      showOwned &&  showWanted &&  showSold) conditions = "document.comics.id >= 0";
+	else if( showOwned &&  showWanted && !showSold) conditions = "(document.comics.owned = 'true' OR document.comics.sold_price IS NULL)";
+	else if( showOwned && !showWanted &&  showSold) conditions = "(document.comics.owned = 'true' OR document.comics.sold_price IS NOT NULL)";
+	else if( showOwned && !showWanted && !showSold) conditions = "document.comics.owned = 'true'";
+	else if(!showOwned &&  showWanted &&  showSold) conditions = "document.comics.owned = 'false'";
+	else if(!showOwned &&  showWanted && !showSold) conditions = "document.comics.owned = 'false' AND document.comics.sold_price IS NULL";
+	else if(!showOwned && !showWanted &&  showSold) conditions = "document.comics.owned = 'false' AND document.comics.sold_price IS NOT NULL";
+	else if(!showOwned && !showWanted && !showSold) conditions = "document.comics.id = -1";
 	QString sql = QString("SELECT %1 "
 												"FROM document.comics "
 												"INNER JOIN issues ON issues.id = document.comics.issue_id "
-												"WHERE issues.series_id = %2 "
-												"ORDER BY issues.sort_code;").arg(dbNames.join(",")).arg(seriesId);
+												"WHERE issues.series_id = %2 AND %3 "
+												"ORDER BY issues.sort_code;").arg(dbNames.join(",")).arg(seriesId).arg(conditions);
 	setQuery(sql);
 
 	// Set up the UI names for each column
@@ -262,7 +271,12 @@ QVariant ComicDataModel::headerData(int section, Qt::Orientation orientation, in
 **********************************************************************:EDOC*/
 ComicList::ComicList(QWidget* parent)
   : QTableView(parent),
-    model(0)
+    model(0),
+		seriesId(-1),
+		showOwned(true),
+		showWanted(true),
+		showSold(true),
+		showUntracked(false)
 {
 	verticalHeader()->setResizeMode(QHeaderView::Fixed);
 }
@@ -275,6 +289,25 @@ ComicList::~ComicList()
 
 /*SDOC:**********************************************************************
 
+	Name:			ComicList::setModel (SLOT)
+
+	Action:		Override the base-class' setModel to perform some additional 
+						work.
+
+**********************************************************************:EDOC*/
+void ComicList::setModel(QAbstractItemModel* _model)
+{
+	if(model) { delete model; }
+	model = _model;
+	QTableView::setModel(model);
+	setColumnHidden(ComicDataModel::colId, true);			// Hide the "id" column
+	setColumnHidden(ComicDataModel::colNumber, true); // Hide the "number" column
+	resizeColumnsToContents();
+}
+
+
+/*SDOC:**********************************************************************
+
 	Name:			ComicList::setSeries (SLOT)
 
 	Action:		Filters the list of comics by the selected series
@@ -282,14 +315,41 @@ ComicList::~ComicList()
 	Params:		seriesId - the id of the series to filter by
 
 **********************************************************************:EDOC*/
-void ComicList::setSeries(int seriesId)
+void ComicList::setSeries(int _seriesId)
 {
-  if(model) { delete model; model = NULL; }
-  model = new ComicDataModel(seriesId);
-  setModel(model);
-	setColumnHidden(ComicDataModel::colId, true);			// Hide the "id" column
-	setColumnHidden(ComicDataModel::colNumber, true); // Hide the "number" column
-	resizeColumnsToContents();
+  setModel(new ComicDataModel(seriesId = _seriesId, showOwned, showWanted, showSold, showUntracked, this));
 }
+
+
+/*SDOC:**********************************************************************
+
+	Name:			ComicList::setShowOwned (SLOT)
+						ComicList::setShowWanted (SLOT)
+						ComicList::setShowSold (SLOT)
+						ComicList::setShowUntracked (SLOT)
+
+	Action:		Toggles filtering is the comic list by various criteria
+
+**********************************************************************:EDOC*/
+void ComicList::setShowOwned(bool show)
+{
+  setModel(new ComicDataModel(seriesId, showOwned = show, showWanted, showSold, showUntracked, this));
+}
+
+void ComicList::setShowWanted(bool show)
+{
+  setModel(new ComicDataModel(seriesId, showOwned, showWanted = show, showSold, showUntracked, this));
+}
+
+void ComicList::setShowSold(bool show)
+{
+  setModel(new ComicDataModel(seriesId, showOwned, showWanted, showSold = show, showUntracked, this));
+}
+
+void ComicList::setShowUntracked(bool show)
+{
+  setModel(new ComicDataModel(seriesId, showOwned, showWanted, showSold, showUntracked = show, this));
+}
+
 
 /* end of file */

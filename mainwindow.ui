@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_4">
     <item>
-     <widget class="ComicList" name="tableView">
+     <widget class="ComicList" name="issueList">
       <property name="selectionMode">
        <enum>QAbstractItemView::ExtendedSelection</enum>
       </property>
@@ -88,6 +88,10 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <addaction name="action_ShowOwnedIssues"/>
+    <addaction name="action_ShowWantedIssues"/>
+    <addaction name="action_ShowSoldIssues"/>
+    <addaction name="action_ShowUntrackedIssues"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
@@ -302,6 +306,47 @@
     <string>Ctrl+Y</string>
    </property>
   </action>
+  <action name="action_ShowOwnedIssues">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Owned Issues</string>
+   </property>
+  </action>
+  <action name="action_ShowWantedIssues">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Wanted Issues</string>
+   </property>
+  </action>
+  <action name="action_ShowUntrackedIssues">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Untracked Issues</string>
+   </property>
+  </action>
+  <action name="action_ShowSoldIssues">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Sold Issues</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -338,7 +383,7 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>tableView</tabstop>
+  <tabstop>issueList</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -377,7 +422,7 @@
   <connection>
    <sender>comicTitles</sender>
    <signal>seriesSelected(int)</signal>
-   <receiver>tableView</receiver>
+   <receiver>issueList</receiver>
    <slot>setSeries(int)</slot>
    <hints>
     <hint type="sourcelabel">
