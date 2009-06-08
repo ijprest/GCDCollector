@@ -33,42 +33,49 @@
 #include "stdafx.h"
 #include "comiclist.h"
 
-// These three must always be synchronized
-enum columnIds { colId, colOwned, colNumber, colDate, colCondition, colPrice, colStore, colNotes };
-static QString columnNameDb[] = 
-{ 
-	"document.comics.id",					// colId
-	"document.comics.owned",			// colOwned
-	"issues.number",							// colNumber
-	"issues.publication_date",		// colDate
-	"document.comics.condition",	// colCondition
-	"document.comics.price",			// colPrice
-	"document.comics.store",			// colStore
-	"document.comics.notes",			// colNotes
-};
-static QString columnNameUi[] = 
-{
-	"Id",													// colId
-	"",														// colOwned
-	QObject::tr("Number"),				// colNumber
-	QObject::tr("Date"),					// colDate
-	QObject::tr("Condition"),			// colCondition
-	QObject::tr("Price Paid"),		// colPrice
-	QObject::tr("Store"),					// colStore
-	QObject::tr("Notes"),					// colNotes
-};
-
 /////////////////////////////////////////////////////////////////////////////
 // ComicDataModel class
 /////////////////////////////////////////////////////////////////////////////
 class ComicDataModel : public QSqlQueryModel
 {
 public:
+	enum columnIds { colId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes };
+	static QString columnNameDb[];
+	static QString columnNameUi[];
+
 	ComicDataModel(int seriesId, QObject *parent = 0);
 	Qt::ItemFlags flags(const QModelIndex &index) const;
   bool setData(const QModelIndex &index, const QVariant &value, int role);
 	QVariant data(const QModelIndex &index, int role) const;
+	QVariant headerData ( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
 };
+
+// These must be kept synchronized with the ComicDataModel::columnIds enum
+QString ComicDataModel::columnNameDb[] = 
+{ 
+	"document.comics.id",					// colId
+	"issues.number",							// colNumber
+	"document.comics.owned",			// colOwned
+	"issues.publication_date",		// colDate
+	"document.comics.condition",	// colCondition
+	"document.comics.price",			// colPrice
+	"document.comics.store",			// colStore
+	"document.comics.user_id",		// colUserId
+	"document.comics.notes",			// colNotes
+};
+QString ComicDataModel::columnNameUi[] = 
+{
+	"Id",													// colId
+	QObject::tr("Number"),				// colNumber
+	"",														// colOwned
+	QObject::tr("Date"),					// colDate
+	QObject::tr("Condition"),			// colCondition
+	QObject::tr("Price Paid"),		// colPrice
+	QObject::tr("Store"),					// colStore
+	QObject::tr("Id"),						// colUserId
+	QObject::tr("Notes"),					// colNotes
+};
+
 
 /*SDOC:**********************************************************************
 
@@ -115,6 +122,7 @@ Qt::ItemFlags ComicDataModel::flags(const QModelIndex &index) const
 	case colCondition:
 	case colPrice:
 	case colStore:
+	case colUserId:
 	case colNotes:
 		return QSqlQueryModel::flags(index) | Qt::ItemIsEditable;
 	default:
@@ -198,6 +206,7 @@ bool ComicDataModel::setData(const QModelIndex &index, const QVariant &value, in
 			break;
 		case colCondition:
 		case colStore:
+		case colUserId:
 		case colNotes:
 			updateQuery.addBindValue((value.toString().length()==0) ? QVariant(QVariant::String) : value.toString());
 			break;
@@ -223,6 +232,22 @@ bool ComicDataModel::setData(const QModelIndex &index, const QVariant &value, in
 }
 
 
+/*SDOC:**********************************************************************
+
+	Name:			ComicDataModel::headerData
+
+	Action:		Returns the text to display in the header
+
+**********************************************************************:EDOC*/
+QVariant ComicDataModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+	// Use the comic issue number as the vertical header text
+	if(orientation == Qt::Vertical && role == Qt::DisplayRole)
+		return data(index(section,colNumber), role);
+	return QSqlQueryModel::headerData(section, orientation, role);
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 // ComicList class
 /////////////////////////////////////////////////////////////////////////////
@@ -239,6 +264,7 @@ ComicList::ComicList(QWidget* parent)
   : QTableView(parent),
     model(0)
 {
+	verticalHeader()->setResizeMode(QHeaderView::Fixed);
 }
 
 ComicList::~ComicList()
@@ -261,7 +287,8 @@ void ComicList::setSeries(int seriesId)
   if(model) { delete model; model = NULL; }
   model = new ComicDataModel(seriesId);
   setModel(model);
-	setColumnHidden(colId, true); // Hide the "id" column
+	setColumnHidden(ComicDataModel::colId, true);			// Hide the "id" column
+	setColumnHidden(ComicDataModel::colNumber, true); // Hide the "number" column
 	resizeColumnsToContents();
 }
 

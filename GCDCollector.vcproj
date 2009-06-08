@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="GCDCollector"
 	ProjectGUID="{ADAA112F-5D91-4D51-82E1-629B58D10726}"
+	RootNamespace="GCDCollector"
 	Keyword="Qt4VSv1.0"
 	TargetFrameworkVersion="0"
 	>
