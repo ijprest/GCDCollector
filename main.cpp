@@ -33,10 +33,17 @@
 #include "stdafx.h"
 #include "mainwindow.h"
 
+/*SDOC:**********************************************************************
+
+	Name:			createConnection
+
+	Action:		Creates the initial connection to the master comic database.
+
+**********************************************************************:EDOC*/
 bool createConnection()
 {
   QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-  db.setDatabaseName("C:\\Workspaces\\ComicCollector\\comix.db"); // TODO: hardcoded location
+  db.setDatabaseName("..\\comix.db"); // TODO: hardcoded location
   if (!db.open()) 
 	{
     QMessageBox::critical(0, QObject::tr("Database Error"), db.lastError().text());
@@ -46,6 +53,13 @@ bool createConnection()
 }
 
 
+/*SDOC:**********************************************************************
+
+	Name:			main
+
+	Action:		Main entry point; constructs & displays the main window
+
+**********************************************************************:EDOC*/
 int main(int argc, char *argv[])
 {
   // Run the GUI
@@ -56,3 +70,5 @@ int main(int argc, char *argv[])
   w.show();
   return app.exec();
 }
+
+/* end of file */

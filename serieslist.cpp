@@ -33,6 +33,18 @@
 #include "stdafx.h"
 #include "serieslist.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// SeriesList widget class
+/////////////////////////////////////////////////////////////////////////////
+
+/*SDOC:**********************************************************************
+
+	Name:			SeriesList::SeriesList
+						SeriesList::~SeriesList
+
+	Action:		Constructor / Destructor
+
+**********************************************************************:EDOC*/
 SeriesList::SeriesList(QWidget* parent)
   : QTableView(parent),
 		onlyShowOwned(false),
@@ -45,6 +57,16 @@ SeriesList::~SeriesList()
   delete model;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			SeriesList::filterList
+
+	Action:		SLOT called to filter the list by a given string
+
+	Params:		filter - string by which to filter the list
+
+**********************************************************************:EDOC*/
 void SeriesList::filterList(const QString& filter)
 {
   if(model) { delete model; model = NULL; }
@@ -72,9 +94,20 @@ void SeriesList::filterList(const QString& filter)
   connect(selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChange(QModelIndex)));
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			SeriesList::selectionChange
+
+	Action:		SLOT called to when the user's selection changes; emits a 
+						"seriesSelected" signal.
+
+**********************************************************************:EDOC*/
 void SeriesList::selectionChange(const QModelIndex& index)
 {
   // Retrieve the series ID (column 0 in the selected row)
   int seriesId = index.sibling(index.row(),0).data().toInt();
   seriesSelected(seriesId);
 }
+
+/* end of file */

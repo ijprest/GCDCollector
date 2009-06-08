@@ -34,6 +34,17 @@
 #include <QTimerEvent>
 #include "timedlineedit.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// TimedLineEdit widget class
+/////////////////////////////////////////////////////////////////////////////
+
+/*SDOC:**********************************************************************
+
+	Name:			TimedLineEdit::TimedLineEdit
+
+	Action:		Constructor
+
+**********************************************************************:EDOC*/
 TimedLineEdit::TimedLineEdit(QWidget* parent)
   : QLineEdit(parent),
     timerId(-1)
@@ -42,6 +53,20 @@ TimedLineEdit::TimedLineEdit(QWidget* parent)
   connect(this, SIGNAL(editingFinished()), this, SLOT(stopEditTimer()));
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			TimedLineEdit::startEditTimer
+						TimedLineEdit::stopEditTimer
+						TimedLineEdit::timerEvent
+
+	Action:		SLOTs called to start & stop the timer
+
+	Comments:	Called in response to text change events from the underlying 
+						LineEdit control.  When the user stops typing, we wait for 
+						a short amount of time, then emit a timedEdit() SIGNAL.
+
+**********************************************************************:EDOC*/
 void TimedLineEdit::startEditTimer()
 {
   killTimer(timerId);
@@ -61,7 +86,7 @@ void TimedLineEdit::stopEditTimer()
 void TimedLineEdit::timerEvent(QTimerEvent *event)
 {
   if(event->timerId() == timerId)
-  {
     stopEditTimer();
-  }
 }
+
+/* end of file */

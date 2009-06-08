@@ -34,6 +34,18 @@
 #include "addcomics.h"
 #include "ui_addcomics.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// AddComics dialog class
+/////////////////////////////////////////////////////////////////////////////
+
+/*SDOC:**********************************************************************
+
+	Name:			AddComics::AddComics
+						AddComics::~AddComics
+
+	Action:		Constructor / Destructor
+
+**********************************************************************:EDOC*/
 AddComics::AddComics(QWidget* parent)
 	: QDialog(parent),
 		ui(new Ui::AddComics)
@@ -47,6 +59,15 @@ AddComics::~AddComics()
 	delete ui;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			AddComics::addItemsClicked
+
+	Action:		Builds a list of selected items, and emits the "addItems" 
+						signal.
+
+**********************************************************************:EDOC*/
 void AddComics::addItemsClicked()
 {
 	if( ui->tableView->selectionModel() && ui->tableView->selectionModel()->hasSelection() )
@@ -58,3 +79,5 @@ void AddComics::addItemsClicked()
 		addItems(items);
 	}
 }
+
+/* end of file */

@@ -35,13 +35,14 @@
 
 #include <QtGui/QGroupBox>
 
-namespace Ui {
-    class SeriesDetail;
-}
+namespace Ui { class SeriesDetail; }
 
-class SeriesDetail : public QGroupBox {
+/////////////////////////////////////////////////////////////////////////////
+// SeriesDetail widget class
+/////////////////////////////////////////////////////////////////////////////
+class SeriesDetail : public QGroupBox 
+{
     Q_OBJECT
-    Q_DISABLE_COPY(SeriesDetail)
 public:
     explicit SeriesDetail(QWidget *parent = 0);
     virtual ~SeriesDetail();

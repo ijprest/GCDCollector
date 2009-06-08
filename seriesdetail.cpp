@@ -34,6 +34,18 @@
 #include "seriesdetail.h"
 #include "ui_seriesdetail.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// SeriesDetail widget class
+/////////////////////////////////////////////////////////////////////////////
+
+/*SDOC:**********************************************************************
+
+	Name:			SeriesDetail::SeriesDetail
+						SeriesDetail::~SeriesDetail
+
+	Action:		Constructor / Destructor
+
+**********************************************************************:EDOC*/
 SeriesDetail::SeriesDetail(QWidget *parent) :
   QGroupBox(parent),
   m_ui(new Ui::SeriesDetail)
@@ -46,6 +58,16 @@ SeriesDetail::~SeriesDetail()
   delete m_ui;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			SeriesDetail::setSeries
+
+	Action:		SLOT called to display the data of a given series
+
+	Params:		seriesId - the id of the series to display
+
+**********************************************************************:EDOC*/
 void SeriesDetail::setSeries(int seriesId)
 {
   QSqlQuery query;
@@ -67,3 +89,5 @@ void SeriesDetail::setSeries(int seriesId)
     m_ui->labelFormat->setToolTip( format );
   }
 }
+
+/* end of file */

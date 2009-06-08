@@ -35,6 +35,18 @@
 #include "ui_mainwindow.h"
 #include "addcomics.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// MainWindow window class
+/////////////////////////////////////////////////////////////////////////////
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::MainWindow
+						MainWindow::~MainWindow
+
+	Action:		Constructor / destructor
+
+**********************************************************************:EDOC*/
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -75,6 +87,14 @@ MainWindow::~MainWindow()
 	delete addComicsDialog;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::createDatabase
+
+	Action:		Creates the necessary tables in the user-database.
+
+**********************************************************************:EDOC*/
 bool MainWindow::createDatabase(const QString& filename)
 {
   if(!connectDatabase(filename))
@@ -99,8 +119,18 @@ bool MainWindow::createDatabase(const QString& filename)
   return true;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::connectDatabase
+
+	Action:		Attach to a user-database.
+
+**********************************************************************:EDOC*/
 bool MainWindow::connectDatabase(const QString& filename)
 {
+	// We ATTACH the user-database to the master database (instead of just 
+	// opening it normally) so that we can do JOINs between the two.
 	QSqlQuery attach;
 	attach.prepare(QString("ATTACH DATABASE '%1' AS document;").arg(filename));
 	if( !attach.exec() )
@@ -112,6 +142,34 @@ bool MainWindow::connectDatabase(const QString& filename)
   return true;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::closeDatabase
+
+	Action:		Detach from a user-database.
+
+**********************************************************************:EDOC*/
+void MainWindow::closeDatabase()
+{
+	QSqlQuery detach;
+	detach.prepare("DETACH DATABASE document;");
+	if( !detach.exec() )
+	{
+		QMessageBox::critical(0, tr("Database Error"), detach.lastError().text());
+		return;
+	}
+  setWindowTitle(tr("Comic Collector"));
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::newDatabase
+
+	Action:		Handles the File/New command
+
+**********************************************************************:EDOC*/
 void MainWindow::newDatabase()
 {
   // Get a new filename
@@ -129,6 +187,14 @@ void MainWindow::newDatabase()
   }
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::openDatabase
+
+	Action:		Handles the File/Open command
+
+**********************************************************************:EDOC*/
 void MainWindow::openDatabase()
 {
   // Get a new filename
@@ -143,29 +209,14 @@ void MainWindow::openDatabase()
   }
 }
 
-void MainWindow::closeDatabase()
-{
-	QSqlQuery detach;
-	detach.prepare("DETACH DATABASE document;");
-	if( !detach.exec() )
-	{
-		QMessageBox::critical(0, tr("Database Error"), detach.lastError().text());
-		return;
-	}
-  setWindowTitle(tr("Comic Collector"));
-}
 
-void MainWindow::addComics()
-{
-	if(!addComicsDialog)
-	{
-		addComicsDialog = new AddComics(this);
-		connect(addComicsDialog, SIGNAL(addItems(QList<int>)), this, SLOT(addItems(QList<int>)));
-	}
-	addComicsDialog->show();
-	addComicsDialog->activateWindow();
-}
+/*SDOC:**********************************************************************
 
+	Name:			MainWindow::about
+
+	Action:		Handles the Help/About command
+
+**********************************************************************:EDOC*/
 void MainWindow::about()
 {
 	QMessageBox::about(this, tr("About Comic Collector"), 
@@ -177,6 +228,37 @@ void MainWindow::about()
 				));
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::addComics
+
+	Action:		Handles the Edit/Add Comics command
+
+**********************************************************************:EDOC*/
+void MainWindow::addComics()
+{
+	// The "add comics" dialog is modeless; if it hasn't been created 
+	// yet, do so.
+	if(!addComicsDialog)
+	{
+		addComicsDialog = new AddComics(this);
+		connect(addComicsDialog, SIGNAL(addItems(QList<int>)), this, SLOT(addItems(QList<int>)));
+	}
+	// Show the dialog
+	addComicsDialog->show();
+	addComicsDialog->activateWindow();
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::addItems
+
+	Action:		SLOT called by the "add items" dialog when the user wants to
+						add comics to his collection.
+
+**********************************************************************:EDOC*/
 void MainWindow::addItems(const QList<int>& items)
 {
 	QSqlDatabase db = QSqlDatabase::database();
@@ -199,3 +281,5 @@ void MainWindow::addItems(const QList<int>& items)
 		ui->comicTitles->filterList(ui->filterEdit->text());
 	}
 }
+
+/* end of file */

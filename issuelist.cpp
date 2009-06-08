@@ -33,6 +33,18 @@
 #include "stdafx.h"
 #include "issuelist.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// IssueList widget class
+/////////////////////////////////////////////////////////////////////////////
+
+/*SDOC:**********************************************************************
+
+	Name:			IssueList::IssueList
+						IssueList::~IssueList
+
+	Action:		Constructor / Destructor
+
+**********************************************************************:EDOC*/
 IssueList::IssueList(QWidget* parent)
   : QTableView(parent),
     model(NULL)
@@ -44,8 +56,19 @@ IssueList::~IssueList()
   delete model;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			IssueList::setSeries
+
+	Action:		SLOT that filters the issue list by the indicated series id.
+
+	Params:		seriesId - id of the series to filter by
+
+**********************************************************************:EDOC*/
 void IssueList::setSeries(int seriesId)
 {
+	// Construct a new data model
   if(model) { delete model; model = NULL; }
   model = new QSqlQueryModel;
   model->setQuery(QString("SELECT Id, Number, publication_date, Price, page_count, notes "
@@ -61,3 +84,5 @@ void IssueList::setSeries(int seriesId)
   setColumnHidden(0, true); // Hide the "id" column
 	resizeColumnsToContents();
 }
+
+/* end of file */
