@@ -17,9 +17,6 @@
    <layout class="QVBoxLayout" name="verticalLayout_4">
     <item>
      <widget class="ComicList" name="tableView">
-      <property name="alternatingRowColors">
-       <bool>true</bool>
-      </property>
       <property name="selectionMode">
        <enum>QAbstractItemView::ExtendedSelection</enum>
       </property>
@@ -152,6 +149,9 @@
             <number>0</number>
            </property>
            <item>
+            <widget class="TimedLineEdit" name="filterEdit"/>
+           </item>
+           <item>
             <widget class="SeriesList" name="comicTitles">
              <property name="frameShape">
               <enum>QFrame::Box</enum>
@@ -199,9 +199,6 @@
               <number>18</number>
              </attribute>
             </widget>
-           </item>
-           <item>
-            <widget class="TimedLineEdit" name="filterEdit"/>
            </item>
           </layout>
          </widget>
@@ -338,7 +335,6 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>filterEdit</tabstop>
   <tabstop>tableView</tabstop>
  </tabstops>
  <resources/>
