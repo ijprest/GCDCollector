@@ -18,12 +18,9 @@
     <item>
      <widget class="ComicList" name="issueList">
       <property name="selectionMode">
-       <enum>QAbstractItemView::ExtendedSelection</enum>
+       <enum>QAbstractItemView::ContiguousSelection</enum>
       </property>
       <property name="wordWrap">
-       <bool>false</bool>
-      </property>
-      <property name="cornerButtonEnabled">
        <bool>false</bool>
       </property>
       <attribute name="horizontalHeaderStretchLastSection">
@@ -37,9 +34,6 @@
       </attribute>
       <attribute name="verticalHeaderMinimumSectionSize">
        <number>18</number>
-      </attribute>
-      <attribute name="verticalHeaderVisible">
-       <bool>true</bool>
       </attribute>
      </widget>
     </item>
@@ -76,6 +70,7 @@
     <addaction name="action_Cut"/>
     <addaction name="action_Copy"/>
     <addaction name="action_Paste"/>
+    <addaction name="action_Delete"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
     <property name="title">
@@ -345,6 +340,11 @@
    </property>
    <property name="text">
     <string>Show Sold Issues</string>
+   </property>
+  </action>
+  <action name="action_Delete">
+   <property name="text">
+    <string>&amp;Delete</string>
    </property>
   </action>
  </widget>

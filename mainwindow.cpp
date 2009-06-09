@@ -63,6 +63,10 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->action_Exit, SIGNAL(triggered()), this, SLOT(close()));
 	// Edit menu
 	connect(ui->action_AddComics, SIGNAL(triggered()), this, SLOT(addComics()));
+	connect(ui->action_Cut, SIGNAL(triggered()), ui->issueList, SLOT(cut())); ui->action_Cut->setShortcuts(QKeySequence::Cut);
+	connect(ui->action_Copy, SIGNAL(triggered()), ui->issueList, SLOT(copy())); ui->action_Copy->setShortcuts(QKeySequence::Copy);
+	connect(ui->action_Paste, SIGNAL(triggered()), ui->issueList, SLOT(paste())); ui->action_Paste->setShortcuts(QKeySequence::Paste);
+	connect(ui->action_Delete, SIGNAL(triggered()), ui->issueList, SLOT(del())); ui->action_Delete->setShortcuts(QKeySequence::Delete);
 	// View menu
 	connect(ui->action_ShowOwnedIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowOwned(bool)));
 	connect(ui->action_ShowWantedIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowWanted(bool)));
@@ -112,7 +116,7 @@ bool MainWindow::createDatabase(const QString& filename)
 
 	QSqlQuery createTable;
 	createTable.prepare("CREATE TABLE document.comics ("
-												"id INTEGER PRIMARY KEY NOT NULL, "
+												"id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
 												"issue_id INTEGER NOT NULL, "
 												"condition VARCHAR(32), "
 												"store VARCHAR(32), "

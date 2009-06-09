@@ -54,10 +54,15 @@ public slots:
 	void setShowSold(bool show);
 	void setShowUntracked(bool show);
 
+	void cut();
+	void copy();
+	void paste();
+	void del();
+
 // implementation
 private:
 	void setModel(QAbstractItemModel* model);
-  QAbstractItemModel* model;
+  QAbstractItemModel* _model;
 	int seriesId;
 	bool showOwned, showWanted, showSold, showUntracked;
 };
