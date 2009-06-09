@@ -417,8 +417,9 @@ void ComicList::paste()
   QItemSelectionRange selection = selectionModel()->selection().first();
 
 	// Expect clipboard data as tab-separated values
-	QString str = QApplication::clipboard()->text().trimmed();
+	QString str = QApplication::clipboard()->text();
 	QStringList rows = str.split('\n');
+	if(rows.back().length() == 0) rows.pop_back();
 	int numRows = rows.count();
 	int numColumns = rows.first().count('\t') + 1;
 
