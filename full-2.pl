@@ -64,11 +64,6 @@ print << 'EOF';
 CREATE TABLE `covers` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   `issue_id` int(11) NOT NULL,
-  `issue_number` varchar(50) NOT NULL,
-  `series_id` int(11) NOT NULL,
-  `sequence_id` int(11) default NULL,
-  `sequence_number` int(11) default NULL,
-  `issue_sort_code` varchar(50) NOT NULL,
   `has_image` tinyint(1) NOT NULL default '0',
   `marked` tinyint(1) NOT NULL default '0',
   `has_small` tinyint(1) NOT NULL default '0',
@@ -76,7 +71,7 @@ CREATE TABLE `covers` (
   `has_large` tinyint(1) NOT NULL default '0'
 );
 INSERT INTO `covers` 
-SELECT `id`, `issue_id`, `issue_number`, `series_id`, `sequence_id`, `sequence_number`, `issue_sort_code`, `has_image`, `marked`, `has_small`, `has_medium`, `has_large` 
+SELECT `id`, `issue_id`, `has_image`, `marked`, `has_small`, `has_medium`, `has_large` 
 FROM core_cover;
 DROP TABLE `core_cover`;
 

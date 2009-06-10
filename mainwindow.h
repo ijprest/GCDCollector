@@ -57,6 +57,8 @@ private slots:;
 	void about();
 	void addItems(const QList<int>& items);
 
+	void setCoverId(int id);
+
 private:
   bool createDatabase(const QString& filename);
   bool connectDatabase(const QString& filename);

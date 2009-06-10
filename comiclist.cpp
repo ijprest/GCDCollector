@@ -40,7 +40,7 @@
 class ComicDataModel : public QSqlQueryModel
 {
 public:
-	enum columnIds { colId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes };
+	enum columnIds { colId, colIssueId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes };
 	static QString columnNameDb[];
 	static QString columnNameUi[];
 
@@ -58,6 +58,7 @@ public:
 QString ComicDataModel::columnNameDb[] = 
 { 
 	"document.comics.id",					// colId
+	"document.comics.issue_id",		// colIssueId
 	"issues.number",							// colNumber
 	"document.comics.owned",			// colOwned
 	"issues.publication_date",		// colDate
@@ -70,6 +71,7 @@ QString ComicDataModel::columnNameDb[] =
 QString ComicDataModel::columnNameUi[] = 
 {
 	"Id",													// colId
+	"Issue",											// colIssueId
 	QObject::tr("Number"),				// colNumber
 	"",														// colOwned
 	QObject::tr("Date"),					// colDate
@@ -322,8 +324,11 @@ void ComicList::setModel(QAbstractItemModel* newModel)
 {
 	if(_model) { delete _model; }
 	_model = newModel;
+
 	QTableView::setModel(_model);
+	connect(selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChange(QModelIndex)));
 	setColumnHidden(ComicDataModel::colId, true);			// Hide the "id" column
+	setColumnHidden(ComicDataModel::colIssueId, true);// Hide the "issue id" column
 	setColumnHidden(ComicDataModel::colNumber, true); // Hide the "number" column
 	resizeColumnsToContents();
 }
@@ -496,6 +501,12 @@ void ComicList::del()
 		}
 		((ComicDataModel*)_model)->refreshView(selection);
 	}
+}
+
+void ComicList::selectionChange(const QModelIndex& index)
+{
+	int rowId = model()->data(index.sibling(index.row(),ComicDataModel::colIssueId)).toInt();
+	selectionChanged(rowId);
 }
 
 /* end of file */

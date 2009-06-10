@@ -36,4 +36,5 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlQueryModel>
-
+#include <QtNetwork/QHttp>
+#include <QTemporaryFile>

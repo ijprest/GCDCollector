@@ -1,8 +1,8 @@
 /*SDOC:**********************************************************************
 
-	File:			comiclist.h
+	File:			coverwidget.h
 
-	Action:		Declaration of the ComicList TableView.
+	Action:		Declaration of the CoverViewer widget.
 
 	Copyright © 2009, Ian Prest
 	All rights reserved.
@@ -31,45 +31,40 @@
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **********************************************************************:EDOC*/
-#ifndef COMICLIST_H
-#define COMICLIST_H
-#include <QTableView>
-#include <QSqlQueryModel>
+#ifndef COVERWIDGET_H
+#define COVERWIDGET_H
+#include <QtNetwork/QHttp>
 
 /////////////////////////////////////////////////////////////////////////////
-// ComicList class
+// CoverViewer widget class
 /////////////////////////////////////////////////////////////////////////////
-class ComicList : public QTableView
+class CoverViewer : public QWidget
 {
   Q_OBJECT
 public:
-  ComicList(QWidget* parent);
-  ~ComicList();
+  CoverViewer(QWidget* parent);
+  ~CoverViewer();
 
 // interface
-signals:
-	void selectionChanged(int issueId);
-
 public slots:
-  void setSeries(int seriesId);
-	void setShowOwned(bool show);
-	void setShowWanted(bool show);
-	void setShowSold(bool show);
-	void setShowUntracked(bool show);
-
-	void cut();
-	void copy();
-	void paste();
-	void del();
+	void setImageId(int id);
 
 // implementation
 private slots:
-  void selectionChange(const QModelIndex& index);
+	void httpDone(bool);
 private:
-	void setModel(QAbstractItemModel* model);
-  QAbstractItemModel* _model;
-	int seriesId;
-	bool showOwned, showWanted, showSold, showUntracked;
+	bool getFile(const QUrl& url);
+	bool readImage(const QString& file);
+protected:
+	void dragEnterEvent(QDragEnterEvent* ev);
+	void dropEvent(QDropEvent* ev);
+	void paintEvent(QPaintEvent* ev);
+private:
+	QHttp http;
+	QTemporaryFile* tempFile;
+	QImage* image;
+	QImage* scaledImage;
+	int currentId;
 };
 
-#endif // COMICLIST_H
+#endif // COVERWIDGET_H

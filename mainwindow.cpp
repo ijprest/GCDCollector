@@ -76,6 +76,12 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->action_About, SIGNAL(triggered()), this, SLOT(about()));
 	connect(ui->action_AboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 
+	// Other
+	connect(ui->issueList, SIGNAL(selectionChanged(int)), this, SLOT(setCoverId(int)));
+
+	// Set the series-list to only show series we own
+	ui->comicTitles->setOnlyShowOwned(true);
+
 	// Handle command-line arguments
 	for(int i = 1; i < QCoreApplication::arguments().size(); ++i)
 	{
@@ -85,10 +91,6 @@ MainWindow::MainWindow(QWidget *parent)
 			connectDatabase(fileInfo.absoluteFilePath());
 		}
 	}
-
-	// Set the series-list to only show series we own
-	ui->comicTitles->setOnlyShowOwned(true);
-	ui->comicTitles->filterList("");
 
 	// The window icon (used by the about box)
 	QIcon icon(":/GCDCollector/Resources/short-box.png");
@@ -114,21 +116,35 @@ bool MainWindow::createDatabase(const QString& filename)
   if(!connectDatabase(filename))
     return false;
 
-	QSqlQuery createTable;
-	createTable.prepare("CREATE TABLE document.comics ("
-												"id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-												"issue_id INTEGER NOT NULL, "
-												"condition VARCHAR(32), "
-												"store VARCHAR(32), "
-												"price DOUBLE, "
-												"notes VARCHAR, "
-												"owned TINYINT(1) NOT NULL DEFAULT ('false'), "
-												"sold_price DOUBLE, "
-												"user_id VARCHAR(32));");
-	if( !createTable.exec() )
+	// document.comics
 	{
-		QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
-		return false;
+		QSqlQuery createTable;
+		createTable.prepare("CREATE TABLE document.comics ("
+													"id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+													"issue_id INTEGER NOT NULL, "
+													"condition VARCHAR(32), "
+													"store VARCHAR(32), "
+													"price DOUBLE, "
+													"notes VARCHAR, "
+													"owned TINYINT(1) NOT NULL DEFAULT ('false'), "
+													"sold_price DOUBLE, "
+													"user_id VARCHAR(32));");
+		if( !createTable.exec() )
+		{
+			QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
+			return false;
+		}
+	}
+
+	// document.images
+	{
+		QSqlQuery createTable;
+		createTable.prepare("CREATE TABLE document.images (id INTEGER PRIMARY KEY NOT NULL, data BLOB);");
+		if( !createTable.exec() )
+		{
+			QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
+			return false;
+		}
 	}
   return true;
 }
@@ -153,6 +169,9 @@ bool MainWindow::connectDatabase(const QString& filename)
 		return false;
 	}
   setWindowTitle(tr("Comic Collector - %1").arg(filename));
+
+	// re-filter the main window's series list
+	ui->comicTitles->filterList(ui->filterEdit->text());
   return true;
 }
 
@@ -294,6 +313,42 @@ void MainWindow::addItems(const QList<int>& items)
 		// re-filter the main window's series list
 		ui->comicTitles->filterList(ui->filterEdit->text());
 	}
+}
+
+void MainWindow::setCoverId(int id)
+{
+	QSqlQuery query;
+	query.prepare("SELECT issues.series_id, issues.sort_code, covers.has_image, covers.has_small, "
+								"covers.has_medium, covers.has_large FROM issues INNER JOIN covers ON issues.id=covers.issue_id "
+								"WHERE issues.id=?");
+	query.addBindValue(id);
+	query.exec();
+	if(query.next()) // only expecting one row
+	{
+		/*
+		href = QString("http://www.comics.org/graphics/covers/%1/400/%1_4_%2.jpg")
+											.arg(query.value(0).toInt())			// series_id
+											.arg(query.value(1).toString());	// sort_code
+		*/
+
+		int zoom = 0;
+		if(query.value(5).toBool()) // large image
+			zoom = 4;
+		else if(query.value(4).toBool()) // medium image
+			zoom = 2;
+		else if(query.value(3).toBool()) // small image
+			zoom = 1;
+
+		if(zoom > 0)
+		{
+			QString href = QString("http://www.comics.org/coverview.lasso?id=%1&zoom=%2").arg(id).arg(zoom);
+			ui->coverLink->setText(QString("<a href='%1'>See Cover Online</a>").arg(href));
+			return;
+		}
+	}
+
+	// cover wasn't available
+	ui->coverLink->setText(tr("Drop a cover image here"));
 }
 
 /* end of file */

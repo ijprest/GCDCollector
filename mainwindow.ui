@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>899</width>
-    <height>593</height>
+    <height>709</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,6 +17,18 @@
    <layout class="QVBoxLayout" name="verticalLayout_4">
     <item>
      <widget class="ComicList" name="issueList">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>600</width>
+        <height>0</height>
+       </size>
+      </property>
       <property name="selectionMode">
        <enum>QAbstractItemView::ContiguousSelection</enum>
       </property>
@@ -103,10 +115,16 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
      <width>258</width>
-     <height>151</height>
+     <height>165</height>
     </size>
    </property>
    <property name="features">
@@ -131,6 +149,12 @@
      </property>
      <item>
       <widget class="QFrame" name="frame">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
@@ -151,10 +175,26 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="TimedLineEdit" name="filterEdit"/>
+            <widget class="TimedLineEdit" name="filterEdit">
+             <property name="acceptDrops">
+              <bool>false</bool>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="SeriesList" name="comicTitles">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>100</height>
+              </size>
+             </property>
              <property name="frameShape">
               <enum>QFrame::Box</enum>
              </property>
@@ -209,6 +249,68 @@
          <widget class="SeriesDetail" name="groupBox"/>
         </item>
        </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>258</width>
+     <height>403</height>
+    </size>
+   </property>
+   <property name="features">
+    <set>QDockWidget::AllDockWidgetFeatures</set>
+   </property>
+   <property name="windowTitle">
+    <string>Cover</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <property name="margin">
+      <number>1</number>
+     </property>
+     <item>
+      <widget class="CoverViewer" name="coverView">
+       <property name="minimumSize">
+        <size>
+         <width>256</width>
+         <height>359</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="coverLink">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Drop a cover image here</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="openExternalLinks">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+       </property>
       </widget>
      </item>
     </layout>
@@ -380,6 +482,11 @@
    <class>ComicList</class>
    <extends>QTableView</extends>
    <header>comiclist.h</header>
+  </customwidget>
+  <customwidget>
+   <class>CoverViewer</class>
+   <extends>QGraphicsView</extends>
+   <header>coverwidget.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
