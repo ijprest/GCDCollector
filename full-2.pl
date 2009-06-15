@@ -8,7 +8,14 @@ sub escape {
   return $string;
 }
 
+# count lines (for better output messages)
+$lines = 0;
+open FILE, "<full-2.sql" or die;
+while (sysread FILE, $buffer, 4096) { $lines += ($buffer =~ tr/\n//); }
+close FILE;
+
 # parse the GCD data-dump (schema 2 format)
+print STDERR "Parsing input data...\n";
 open FILE, "<full-2.sql" or die;
 LINE: while(<FILE>) {
   $line++;
@@ -46,7 +53,7 @@ LINE: while(<FILE>) {
     my $db = $1 if($firstitem =~ /INSERT INTO `([^`]+)`/);                    # get the database name
     next LINE if($db =~ /(core_indexer|core_reservation|core_seriescredit|core_sequence)/); # skip these tables
 
-    print STDERR "Line: $line, $db\n";
+    printf STDERR "%0.2f%%, INSERTING INTO $db                              \r", $line/$lines*100;
     print "BEGIN TRANSACTION;\n";
     print escape($firstitem),");\n";
     foreach(@insert) {
@@ -57,9 +64,12 @@ LINE: while(<FILE>) {
   }
 }
 close FILE;
+print STDERR "100.00%                                            \n";
 
 # We've now imported all the raw data; time to convert it to 
 # the format we want:
+print STDERR "Creating output tables...\n";
+
 print << 'EOF';
 CREATE TABLE `covers` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -124,7 +134,10 @@ INSERT INTO `publishers` SELECT `id`, `name`, `country_id`, `year_began`, `year_
 DROP TABLE `core_publisher`;
 
 CREATE INDEX "issue_series" on issues (series_id ASC);
-
-PRAGMA page_size = 16384; VACUUM;
-
 EOF
+
+print STDERR "Vacuuming...\n";
+print << 'EOF';
+PRAGMA page_size = 16384; VACUUM;
+EOF
+
