@@ -264,7 +264,7 @@
    <property name="minimumSize">
     <size>
      <width>258</width>
-     <height>403</height>
+     <height>431</height>
     </size>
    </property>
    <property name="features">
@@ -288,6 +288,16 @@
          <width>256</width>
          <height>359</height>
         </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QProgressBar" name="coverProgress">
+       <property name="textVisible">
+        <bool>false</bool>
+       </property>
+       <property name="invertedAppearance">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

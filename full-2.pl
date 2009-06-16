@@ -134,6 +134,7 @@ INSERT INTO `publishers` SELECT `id`, `name`, `country_id`, `year_began`, `year_
 DROP TABLE `core_publisher`;
 
 CREATE INDEX "issue_series" on issues (series_id ASC);
+CREATE INDEX "covers_issue" on covers (issue_id ASC);
 EOF
 
 print STDERR "Vacuuming...\n";

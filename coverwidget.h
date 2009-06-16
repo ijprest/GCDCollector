@@ -46,12 +46,16 @@ public:
   ~CoverViewer();
 
 // interface
+signals:
+	void downloadProgress(int value, int size);
+	void downloadInProgress(bool inProgress);
 public slots:
 	void setImageId(int id);
 
 // implementation
 private slots:
 	void httpDone(bool);
+	void httpStatus(int value, int size) { downloadProgress(value,size); }
 private:
 	bool getFile(const QUrl& url);
 	bool readImage(const QString& file);

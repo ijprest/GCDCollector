@@ -78,6 +78,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 	// Other
 	connect(ui->issueList, SIGNAL(selectionChanged(int)), this, SLOT(setCoverId(int)));
+	connect(ui->issueList, SIGNAL(selectionChanged(int)), ui->coverView, SLOT(setImageId(int)));
+	connect(ui->coverView, SIGNAL(downloadProgress(int,int)), ui->coverProgress, SLOT(setRange(int,int)));
+	connect(ui->coverView, SIGNAL(downloadInProgress(bool)), ui->coverProgress, SLOT(setVisible(bool)));
+	ui->coverProgress->setVisible(false);
 
 	// Set the series-list to only show series we own
 	ui->comicTitles->setOnlyShowOwned(true);

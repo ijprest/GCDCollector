@@ -56,6 +56,7 @@ CoverViewer::CoverViewer(QWidget* parent)
 {
 	setAcceptDrops(true);
 	connect(&http, SIGNAL(done(bool)), this, SLOT(httpDone(bool)));
+	connect(&http, SIGNAL(dataReadProgress(int,int)), this, SLOT(httpStatus(int,int)));
 }
 
 CoverViewer::~CoverViewer()
@@ -99,10 +100,11 @@ bool CoverViewer::getFile(const QUrl& url)
 		if(url.path().isEmpty())
 			return false;
 	
+		downloadInProgress(true);
+
 		http.abort();
 		tempFile = new QTemporaryFile();
 		tempFile->open();
-
 		http.setHost(url.host(), url.port(80));
 		http.get(url.path(), tempFile);
 		http.close();
@@ -127,6 +129,7 @@ void CoverViewer::httpDone(bool error)
 		delete tempFile;
 		tempFile = NULL;
 	}
+	downloadInProgress(false);
 }
 
 void CoverViewer::setImageId(int id)
@@ -138,9 +141,25 @@ void CoverViewer::setImageId(int id)
 	image = NULL;
 	delete scaledImage;
 	scaledImage = NULL;
+
+	// Try to load the image from the database
+	QSqlQuery query;
+	query.prepare("SELECT data FROM document.images WHERE id=?;");
+	query.addBindValue(currentId);
+	query.exec();
+	if(query.next()) // only expecting one row
+	{
+		QByteArray bytes = query.value(0).toByteArray();
+		if(bytes.length() > 0)
+		{
+			image = new QImage();
+			image->loadFromData(bytes);
+		}
+	}
+	update();
 }
 
-bool CoverViewer::readImage(const QString& file)
+bool CoverViewer::readImage(const QString& fileName)
 {
 	// Free old image
 	delete image; 
@@ -149,25 +168,29 @@ bool CoverViewer::readImage(const QString& file)
 	scaledImage = NULL;
 
 	// Load new image
-	image = new QImage(file);
+	image = new QImage(fileName);
 	if(!image->isNull())
 	{
-		// Save to an in-memory PNG file
-		QByteArray bytes;
-		QBuffer buffer(&bytes);
-		buffer.open(QIODevice::WriteOnly);
-		image->save(&buffer, "PNG");
+		// Was able to load the image; now read it again and store 
+		// it in the database.
+		QFile file(fileName);
+		if(file.open(QIODevice::ReadOnly))
+		{
+			// Delete any old image in the database
+			QSqlQuery deleteQuery;
+			deleteQuery.prepare("DELETE FROM document.images WHERE id=?;");
+			deleteQuery.addBindValue(currentId);
+			deleteQuery.exec();
 
-		// Delete any old image in the database
-		QSqlQuery("DELETE FROM document.images WHERE id=?;");
-
-		// Insert the new image
-		QSqlQuery query;
-		query.prepare("INSERT INTO document.images VALUES (?,?);");
-		query.addBindValue(currentId);
-		query.addBindValue(bytes);
-		if(!query.exec())
-			QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
+			// Insert the new image
+			QSqlQuery query;
+			query.prepare("INSERT INTO document.images VALUES (?,?);");
+			query.addBindValue(currentId);
+			query.addBindValue(file.readAll());
+			if(!query.exec())
+				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
+			file.close();
+		}
 	}
 	update();
 	return image->isNull();
