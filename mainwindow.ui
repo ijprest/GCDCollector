@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>899</width>
-    <height>709</height>
+    <width>1020</width>
+    <height>740</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,18 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_4">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>3</number>
+    </property>
+    <property name="rightMargin">
+     <number>3</number>
+    </property>
+    <property name="bottomMargin">
+     <number>3</number>
+    </property>
     <item>
      <widget class="ComicList" name="issueList">
       <property name="sizePolicy">
@@ -56,7 +68,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>899</width>
+     <width>1020</width>
      <height>22</height>
     </rect>
    </property>
@@ -75,6 +87,7 @@
      <string>&amp;Edit</string>
     </property>
     <addaction name="action_AddComics"/>
+    <addaction name="action_DuplicateComic"/>
     <addaction name="separator"/>
     <addaction name="action_Undo"/>
     <addaction name="action_Redo"/>
@@ -204,9 +217,6 @@
              <property name="editTriggers">
               <set>QAbstractItemView::NoEditTriggers</set>
              </property>
-             <property name="alternatingRowColors">
-              <bool>true</bool>
-             </property>
              <property name="selectionMode">
               <enum>QAbstractItemView::SingleSelection</enum>
              </property>
@@ -269,6 +279,9 @@
    </property>
    <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>Cover</string>
@@ -457,6 +470,14 @@
   <action name="action_Delete">
    <property name="text">
     <string>&amp;Delete</string>
+   </property>
+  </action>
+  <action name="action_DuplicateComic">
+   <property name="text">
+    <string>Duplica&amp;te Comic</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

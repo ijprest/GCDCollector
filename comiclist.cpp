@@ -40,7 +40,8 @@
 class ComicDataModel : public QSqlQueryModel
 {
 public:
-	enum columnIds { colId, colIssueId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes };
+	enum ColumnIds { colId, colIssueId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes, colSalePrice };
+	enum ItemStatus { statusNone, statusOwned, statusWanted, statusOrdered, statusSold, statusForSale, statusUntracked };
 	static QString columnNameDb[];
 	static QString columnNameUi[];
 
@@ -49,6 +50,7 @@ public:
   bool setData(const QModelIndex &index, const QVariant &value, int role);
 	QVariant data(const QModelIndex &index, int role) const;
 	QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
+	ItemStatus rowStatus( const QModelIndex &index ) const;
 
 	bool setDataInternal(const QModelIndex &index, const QVariant &value, int role);
 	void refreshView(const QItemSelectionRange range);
@@ -58,7 +60,7 @@ public:
 QString ComicDataModel::columnNameDb[] = 
 { 
 	"document.comics.id",					// colId
-	"document.comics.issue_id",		// colIssueId
+	"issues.id",									// colIssueId
 	"issues.number",							// colNumber
 	"document.comics.owned",			// colOwned
 	"issues.publication_date",		// colDate
@@ -67,6 +69,7 @@ QString ComicDataModel::columnNameDb[] =
 	"document.comics.store",			// colStore
 	"document.comics.user_id",		// colUserId
 	"document.comics.notes",			// colNotes
+	"document.comics.sold_price",	// colSoldPrice
 };
 QString ComicDataModel::columnNameUi[] = 
 {
@@ -80,6 +83,7 @@ QString ComicDataModel::columnNameUi[] =
 	QObject::tr("Store"),					// colStore
 	QObject::tr("Id"),						// colUserId
 	QObject::tr("Notes"),					// colNotes
+	QObject::tr("Sale Price"),		// colSoldPrice
 };
 
 
@@ -109,10 +113,10 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 	else if(!showOwned && !showWanted &&  showSold) conditions = "AND document.comics.owned = 'false' AND document.comics.sold_price IS NOT NULL";
 	else if(!showOwned && !showWanted && !showSold) conditions = "AND document.comics.id = -1";
 	QString sql = QString("SELECT %1 "
-												"FROM document.comics "
-												"INNER JOIN issues ON issues.id = document.comics.issue_id "
+												"FROM issues "
+												"%4 JOIN document.comics ON issues.id = document.comics.issue_id "
 												"WHERE issues.series_id = %2 %3 "
-												"ORDER BY issues.sort_code;").arg(dbNames.join(",")).arg(seriesId).arg(conditions);
+												"ORDER BY issues.sort_code;").arg(dbNames.join(",")).arg(seriesId).arg(conditions).arg(showUntracked ? "LEFT" : "INNER");
 	setQuery(sql);
 
 	// Set up the UI names for each column
@@ -148,6 +152,40 @@ Qt::ItemFlags ComicDataModel::flags(const QModelIndex &index) const
 
 /*SDOC:**********************************************************************
 
+	Name:			ComicDataModel::rowStatus
+
+	Action:		Return status of the comic pointed to by index
+
+**********************************************************************:EDOC*/
+ComicDataModel::ItemStatus ComicDataModel::rowStatus( const QModelIndex &index ) const
+{
+	// Test to see if the issue is untracked; this trumps all other considerations
+	if(QSqlQueryModel::data(index.sibling(index.row(),colId)).isNull())
+		return statusUntracked;
+
+	// Test to see if the issue is marked as owned (checked)
+	if(QSqlQueryModel::data(index.sibling(index.row(),colOwned)).toBool())
+	{
+		// Issue is checked; possibly owned or for-sale
+		if(!QSqlQueryModel::data(index.sibling(index.row(),colSalePrice)).isNull())
+			return statusForSale;
+		return statusOwned;
+	}
+	else
+	{
+		// Issue is unchecked; possibly wanted, sold, or on-order
+		if(!QSqlQueryModel::data(index.sibling(index.row(),colSalePrice)).isNull())
+			return statusSold;
+		if(!QSqlQueryModel::data(index.sibling(index.row(),colPrice)).isNull())
+			return statusOrdered;
+		return statusWanted;
+	}
+	return statusNone;
+}
+
+
+/*SDOC:**********************************************************************
+
 	Name:			ComicDataModel::data
 
 	Action:		Retrieve the data for each cell
@@ -155,6 +193,25 @@ Qt::ItemFlags ComicDataModel::flags(const QModelIndex &index) const
 **********************************************************************:EDOC*/
 QVariant ComicDataModel::data(const QModelIndex &index, int role) const
 {
+	switch(rowStatus(index))
+	{
+	case statusUntracked:
+		if(role == Qt::BackgroundRole) return QColor(255,224,224);	// red
+		break;
+	case statusWanted:
+		if(role == Qt::BackgroundRole) return QColor(224,224,255);	// blue
+		break;
+	case statusOrdered:
+		if(role == Qt::BackgroundRole) return QColor(224,255,224);	// green
+		break;
+	case statusSold:
+		if(role == Qt::ForegroundRole) return QColor(128,128,128);	// grey foreground
+		break;
+	case statusForSale:
+		if(role == Qt::ForegroundRole) return QColor(255,0,0);			// red foreground
+		break;
+	}
+	
 	switch(index.column())
 	{
 	// For the "owned" column, we show a checbox instead of the string value
@@ -207,7 +264,19 @@ bool ComicDataModel::setData(const QModelIndex &index, const QVariant &value, in
 		int pos = query().at();
 		query().exec();
 		query().seek(pos);
-		dataChanged(index,index);
+		switch(index.column())
+		{
+		case colOwned:
+		case colPrice:
+		case colSalePrice:
+			// Updating these columns may affect the highlighting, 
+			// so we must invalidate the whole row.
+			dataChanged(index.sibling(index.row(),0),index.sibling(index.row(),columnCount()-1));
+			break;
+		default:
+			dataChanged(index,index);
+			break;
+		}
 		return true;
 	}
 	return false;
@@ -216,7 +285,23 @@ bool ComicDataModel::setData(const QModelIndex &index, const QVariant &value, in
 bool ComicDataModel::setDataInternal(const QModelIndex &index, const QVariant &value, int role)
 {
 	// Get the database identifier for the row
-	int rowId = QSqlQueryModel::data(QSqlQueryModel::index(index.row(), 0)).toInt();
+	int rowId = -1;
+	if(rowStatus(index) == statusUntracked)
+	{
+		// Must first add the item to our collection
+		QSqlQuery query;
+		query.prepare("INSERT INTO document.comics(issue_id) VALUES (?);");
+		query.addBindValue(QSqlQueryModel::data(QSqlQueryModel::index(index.row(), colIssueId)).toInt());
+		if(!query.exec())
+		{
+			QMessageBox::critical(NULL, tr("Database Error"), query.lastError().text());
+		}
+		rowId = query.lastInsertId().toInt();
+	}
+	else
+	{
+		rowId = QSqlQueryModel::data(QSqlQueryModel::index(index.row(), colId)).toInt();
+	}
 
 	// Prepare the UPDATE query
 	QSqlQuery updateQuery;
@@ -255,6 +340,14 @@ bool ComicDataModel::setDataInternal(const QModelIndex &index, const QVariant &v
 	return true;
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			ComicDataModel::refreshView
+
+	Action:		Helper that invalidates a given range
+
+**********************************************************************:EDOC*/
 void ComicDataModel::refreshView(const QItemSelectionRange range)
 {
 	// Re-run the main query & tell any views that our 
@@ -266,6 +359,7 @@ void ComicDataModel::refreshView(const QItemSelectionRange range)
 	dataChanged(range.topLeft(), range.bottomRight());
 }
 
+
 /*SDOC:**********************************************************************
 
 	Name:			ComicDataModel::headerData
@@ -276,8 +370,21 @@ void ComicDataModel::refreshView(const QItemSelectionRange range)
 QVariant ComicDataModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	// Use the comic issue number as the vertical header text
-	if(orientation == Qt::Vertical && role == Qt::DisplayRole)
-		return data(index(section,colNumber), role);
+	if(orientation == Qt::Vertical)
+	{
+		switch(role)
+		{
+		case Qt::DisplayRole:
+			return data(index(section,colNumber), role);
+		case Qt::ForegroundRole:
+			switch(rowStatus(index(section,colId)))
+			{
+			case statusUntracked:
+				return QColor(255,0,0);
+			}
+			break;
+		}
+	}
 	return QSqlQueryModel::headerData(section, orientation, role);
 }
 
@@ -327,9 +434,10 @@ void ComicList::setModel(QAbstractItemModel* newModel)
 
 	QTableView::setModel(_model);
 	connect(selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChange(QModelIndex)));
-	setColumnHidden(ComicDataModel::colId, true);			// Hide the "id" column
-	setColumnHidden(ComicDataModel::colIssueId, true);// Hide the "issue id" column
-	setColumnHidden(ComicDataModel::colNumber, true); // Hide the "number" column
+	setColumnHidden(ComicDataModel::colId, true);					// Hide the "id" column
+	setColumnHidden(ComicDataModel::colIssueId, true);		// Hide the "issue id" column
+	setColumnHidden(ComicDataModel::colNumber, true);			// Hide the "number" column
+	setColumnHidden(ComicDataModel::colSalePrice, true);	// Hide the "sale price" column
 	resizeColumnsToContents();
 }
 
@@ -385,8 +493,9 @@ void ComicList::setShowUntracked(bool show)
 	Name:			ComicList::cut (SLOT)
 						ComicList::copy (SLOT)
 						ComicList::paste (SLOT)
+						ComicList::delete (SLOT)
 
-	Action:		Clipboard handling
+	Action:		Clipboard handling & basic editing
 
 **********************************************************************:EDOC*/
 void ComicList::cut()
@@ -503,10 +612,49 @@ void ComicList::del()
 	}
 }
 
+
+/*SDOC:**********************************************************************
+
+	Name:			ComicList::selectionChange
+
+	Action:		
+
+**********************************************************************:EDOC*/
 void ComicList::selectionChange(const QModelIndex& index)
 {
 	int rowId = model()->data(index.sibling(index.row(),ComicDataModel::colIssueId)).toInt();
 	selectionChanged(rowId);
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			ComicList::duplicate (SLOT)
+
+	Action:		Duplicate the selected item
+
+**********************************************************************:EDOC*/
+void ComicList::duplicate()
+{
+	if(!selectionModel()->hasSelection())
+		return;
+  QItemSelectionRange selection = selectionModel()->selection().first();
+
+	QSqlQuery query;
+	query.prepare("INSERT INTO document.comics(issue_id) VALUES (?);");
+	query.addBindValue(model()->data(selection.topLeft().sibling(selection.top(), ComicDataModel::colIssueId)).toInt());
+	if(!query.exec())
+	{
+		QMessageBox::critical(NULL, tr("Database Error"), query.lastError().text());
+	}
+
+	int row = selection.top();
+	int col = selection.left();
+
+	// refresh by passing a brand-new model
+	setModel(new ComicDataModel(seriesId, showOwned, showWanted, showSold, showUntracked, this));
+	// re-select the old row
+	selectionModel()->setCurrentIndex(model()->index(row,col), QItemSelectionModel::Select);
 }
 
 /* end of file */

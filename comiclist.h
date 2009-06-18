@@ -61,6 +61,7 @@ public slots:
 	void copy();
 	void paste();
 	void del();
+	void duplicate();
 
 // implementation
 private slots:

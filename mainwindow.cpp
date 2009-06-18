@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->action_Exit, SIGNAL(triggered()), this, SLOT(close()));
 	// Edit menu
 	connect(ui->action_AddComics, SIGNAL(triggered()), this, SLOT(addComics()));
+	connect(ui->action_DuplicateComic, SIGNAL(triggered()), ui->issueList, SLOT(duplicate()));
 	connect(ui->action_Cut, SIGNAL(triggered()), ui->issueList, SLOT(cut())); ui->action_Cut->setShortcuts(QKeySequence::Cut);
 	connect(ui->action_Copy, SIGNAL(triggered()), ui->issueList, SLOT(copy())); ui->action_Copy->setShortcuts(QKeySequence::Copy);
 	connect(ui->action_Paste, SIGNAL(triggered()), ui->issueList, SLOT(paste())); ui->action_Paste->setShortcuts(QKeySequence::Paste);
@@ -140,6 +141,16 @@ bool MainWindow::createDatabase(const QString& filename)
 		}
 	}
 
+	{
+		QSqlQuery createIndex;
+		createIndex.prepare("CREATE INDEX document.comics_issueid on document.comics (issue_id ASC)");
+		if( !createIndex.exec() )
+		{
+			QMessageBox::critical(0, tr("Database Error"), createIndex.lastError().text());
+			return false;
+		}
+	}
+
 	// document.images
 	{
 		QSqlQuery createTable;
@@ -150,6 +161,7 @@ bool MainWindow::createDatabase(const QString& filename)
 			return false;
 		}
 	}
+
   return true;
 }
 
@@ -262,6 +274,8 @@ void MainWindow::about()
 				"<p>This software is licensed under the terms of a modified BSD license; "
 				"please see <a href='http://wiki.github.com/ijprest/GCDCollector/license'>"
 				"http://wiki.github.com/ijprest/GCDCollector/license</a> for details.</p>"
+				"<p>All comic data is copyright &copy; 1994-2009, GCD and GCD contributors; "
+				"please see <a href='http://www.comics.org'>http://www.comics.org</a> for details.</p>"
 				));
 }
 
