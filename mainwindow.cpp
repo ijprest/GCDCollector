@@ -276,8 +276,8 @@ void MainWindow::about()
 		tr(	"<h2>Comic Collector</h2>"
 				"<p>Copyright &copy; 2009, Ian Prest<br/>All rights reserved.</p>"
 				"<p>This software is licensed under the terms of a modified BSD license; "
-				"please see <a href='http://wiki.github.com/ijprest/GCDCollector/license'>"
-				"http://wiki.github.com/ijprest/GCDCollector/license</a> for details.</p>"
+				"please see <a href='http://ijprest.github.com/GCDCollector/license.html'>"
+				"http://ijprest.github.com/GCDCollector/license.html</a> for details.</p>"
 				"<p>All comic data is copyright &copy; 1994-2009, GCD and GCD contributors; "
 				"please see <a href='http://www.comics.org'>http://www.comics.org</a> for details.</p>"
 				));
