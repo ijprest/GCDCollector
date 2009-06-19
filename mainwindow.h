@@ -48,6 +48,8 @@ class MainWindow : public QMainWindow
 public:
   MainWindow(QWidget* parent = 0);
   ~MainWindow();
+protected:
+	void closeEvent(QCloseEvent* event);
 
 private slots:;
   void closeDatabase();
@@ -62,6 +64,9 @@ private slots:;
 private:
   bool createDatabase(const QString& filename);
   bool connectDatabase(const QString& filename);
+
+	void writeSettings();
+	void readSettings();
 
 	AddComics* addComicsDialog;
   Ui::MainWindow *ui;

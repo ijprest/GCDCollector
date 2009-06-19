@@ -87,6 +87,9 @@ MainWindow::MainWindow(QWidget *parent)
 	// Set the series-list to only show series we own
 	ui->comicTitles->setOnlyShowOwned(true);
 
+	// Restore UI state
+	readSettings();
+
 	// Handle command-line arguments
 	for(int i = 1; i < QCoreApplication::arguments().size(); ++i)
 	{
@@ -277,6 +280,63 @@ void MainWindow::about()
 				"<p>All comic data is copyright &copy; 1994-2009, GCD and GCD contributors; "
 				"please see <a href='http://www.comics.org'>http://www.comics.org</a> for details.</p>"
 				));
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::closeEvent
+
+	Action:		Called when the user closes the window; will save user 
+						preferences.
+
+**********************************************************************:EDOC*/
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+	writeSettings();
+	event->accept();
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::writeSettings
+						MainWindow::readSettings
+
+	Action:		Save/restore user preferences.
+
+**********************************************************************:EDOC*/
+void MainWindow::writeSettings()
+{
+	QSettings settings("GCDCollector", "1.0");
+
+	// Save window position
+	settings.setValue("geometry", geometry());
+	// Save docker positions
+	settings.setValue("dockerState", saveState());
+
+	// Save show/hide flags
+	settings.setValue("showOwned", ui->action_ShowOwnedIssues->isChecked());
+	settings.setValue("showWanted", ui->action_ShowWantedIssues->isChecked());
+	settings.setValue("showSold", ui->action_ShowSoldIssues->isChecked());
+	settings.setValue("showUntracked", ui->action_ShowUntrackedIssues->isChecked());
+}
+
+void MainWindow::readSettings()
+{
+	// Restore window position
+	QSettings settings("GCDCollector", "1.0");
+	QRect rect = settings.value("geometry", QRect(50,50,1020,740)).toRect();
+	move(rect.topLeft());
+	resize(rect.size());
+	// Restore docker positions
+	restoreState(settings.value("dockerState").toByteArray());
+
+	// Restore show/hide flags
+	ui->action_ShowOwnedIssues->setChecked(settings.value("showOwned", true).toBool());
+	ui->action_ShowWantedIssues->setChecked(settings.value("showWanted", true).toBool());
+	ui->action_ShowSoldIssues->setChecked(settings.value("showSold", true).toBool());
+	ui->action_ShowUntrackedIssues->setChecked(settings.value("showUntracked", false).toBool());
 }
 
 
