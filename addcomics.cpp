@@ -81,4 +81,26 @@ void AddComics::addItemsClicked()
 	}
 }
 
+/*SDOC:**********************************************************************
+
+	Name:			AddComics::writeSettings
+						AddComics::readSettings
+
+	Action:		Save/restore user preferences.
+
+**********************************************************************:EDOC*/
+void AddComics::writeSettings(QSettings& settings)
+{
+	settings.beginGroup("addComicsDialog");
+	settings.setValue("geometry", saveGeometry());
+	settings.endGroup();
+}
+
+void AddComics::readSettings(QSettings& settings)
+{
+	settings.beginGroup("addComicsDialog");
+	restoreGeometry(settings.value("geometry").toByteArray());
+	settings.endGroup();
+}
+
 /* end of file */

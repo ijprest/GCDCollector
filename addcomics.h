@@ -46,6 +46,9 @@ public:
 	AddComics(QWidget* parent = 0);
 	~AddComics();
 
+	void readSettings(QSettings& settings);
+	void writeSettings(QSettings& settings);
+
 signals:
 	void addItems(const QList<int>& items);
 

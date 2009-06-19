@@ -67,7 +67,9 @@ private:
 
 	void writeSettings();
 	void readSettings();
+	QSettings& settings() { return settings_; }
 
+	QSettings settings_;
 	AddComics* addComicsDialog;
   Ui::MainWindow *ui;
 };

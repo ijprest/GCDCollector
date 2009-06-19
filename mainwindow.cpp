@@ -51,6 +51,7 @@
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent),
     ui(new Ui::MainWindow),
+		settings_("GCDCollector", "1.0"),
 		addComicsDialog(0)
 {
 	// Initialize UI
@@ -308,35 +309,33 @@ void MainWindow::closeEvent(QCloseEvent* event)
 **********************************************************************:EDOC*/
 void MainWindow::writeSettings()
 {
-	QSettings settings("GCDCollector", "1.0");
-
 	// Save window position
-	settings.setValue("geometry", geometry());
+	settings().setValue("geometry", saveGeometry());
 	// Save docker positions
-	settings.setValue("dockerState", saveState());
+	settings().setValue("dockerState", saveState());
+
+	// Sub-dialogs
+	if(addComicsDialog) addComicsDialog->writeSettings(settings());
 
 	// Save show/hide flags
-	settings.setValue("showOwned", ui->action_ShowOwnedIssues->isChecked());
-	settings.setValue("showWanted", ui->action_ShowWantedIssues->isChecked());
-	settings.setValue("showSold", ui->action_ShowSoldIssues->isChecked());
-	settings.setValue("showUntracked", ui->action_ShowUntrackedIssues->isChecked());
+	settings().setValue("showOwned", ui->action_ShowOwnedIssues->isChecked());
+	settings().setValue("showWanted", ui->action_ShowWantedIssues->isChecked());
+	settings().setValue("showSold", ui->action_ShowSoldIssues->isChecked());
+	settings().setValue("showUntracked", ui->action_ShowUntrackedIssues->isChecked());
 }
 
 void MainWindow::readSettings()
 {
 	// Restore window position
-	QSettings settings("GCDCollector", "1.0");
-	QRect rect = settings.value("geometry", QRect(50,50,1020,740)).toRect();
-	move(rect.topLeft());
-	resize(rect.size());
+	restoreGeometry(settings().value("geometry").toByteArray());
 	// Restore docker positions
-	restoreState(settings.value("dockerState").toByteArray());
+	restoreState(settings().value("dockerState").toByteArray());
 
 	// Restore show/hide flags
-	ui->action_ShowOwnedIssues->setChecked(settings.value("showOwned", true).toBool());
-	ui->action_ShowWantedIssues->setChecked(settings.value("showWanted", true).toBool());
-	ui->action_ShowSoldIssues->setChecked(settings.value("showSold", true).toBool());
-	ui->action_ShowUntrackedIssues->setChecked(settings.value("showUntracked", false).toBool());
+	ui->action_ShowOwnedIssues->setChecked(settings().value("showOwned", true).toBool());
+	ui->action_ShowWantedIssues->setChecked(settings().value("showWanted", true).toBool());
+	ui->action_ShowSoldIssues->setChecked(settings().value("showSold", true).toBool());
+	ui->action_ShowUntrackedIssues->setChecked(settings().value("showUntracked", false).toBool());
 }
 
 
@@ -354,6 +353,7 @@ void MainWindow::addComics()
 	if(!addComicsDialog)
 	{
 		addComicsDialog = new AddComics(this);
+		addComicsDialog->readSettings(settings());
 		connect(addComicsDialog, SIGNAL(addItems(QList<int>)), this, SLOT(addItems(QList<int>)));
 	}
 	// Show the dialog
