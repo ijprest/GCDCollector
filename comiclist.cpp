@@ -557,8 +557,10 @@ void ComicList::paste()
 
 	// Expect clipboard data as tab-separated values
 	QString str = QApplication::clipboard()->text();
+	if(str.isEmpty())
+		return;
 	QStringList rows = str.split('\n');
-	if(rows.back().length() == 0) rows.pop_back();
+	if(rows.count() > 1 && rows.back().length() == 0) rows.pop_back();
 	int numRows = rows.count();
 	int numColumns = rows.first().count('\t') + 1;
 
