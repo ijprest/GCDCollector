@@ -393,6 +393,8 @@ QVariant ComicDataModel::headerData(int section, Qt::Orientation orientation, in
 		case Qt::DisplayRole:
 			return data(index(section,colNumber), role);
 		case Qt::ForegroundRole:
+			if(QSqlQueryModel::data(index(section,colIssueId)).toInt() < 0)
+				return QColor(0,0,255);
 			switch(rowStatus(index(section,colId)))
 			{
 			case statusUntracked:
