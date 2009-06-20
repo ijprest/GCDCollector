@@ -116,7 +116,7 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 												"FROM issues "
 												"%4 JOIN document.comics ON issues.id = document.comics.issue_id "
 												"WHERE issues.series_id = %2 %3 "
-												"ORDER BY issues.sort_code;").arg(dbNames.join(",")).arg(seriesId).arg(conditions).arg(showUntracked ? "LEFT" : "INNER");
+												"ORDER BY CAST(issues.number AS INTEGER), issues.sort_code;").arg(dbNames.join(",")).arg(seriesId).arg(conditions).arg(showUntracked ? "LEFT" : "INNER");
 	setQuery(sql);
 
 	// Set up the UI names for each column
