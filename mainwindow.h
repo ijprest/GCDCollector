@@ -56,6 +56,8 @@ private slots:;
   void openDatabase();
   void newDatabase();
 	void addComics();
+	void addCustomSeries();
+	void addCustomIssue();
 	void about();
 	void addItems(const QList<int>& items);
 

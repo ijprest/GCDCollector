@@ -40,7 +40,7 @@
 class ComicDataModel : public QSqlQueryModel
 {
 public:
-	enum ColumnIds { colId, colIssueId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes, colSalePrice };
+	enum ColumnIds { colIssueId, colId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes, colSalePrice, colOrderBy };
 	enum ItemStatus { statusNone, statusOwned, statusWanted, statusOrdered, statusSold, statusForSale, statusUntracked };
 	static QString columnNameDb[];
 	static QString columnNameUi[];
@@ -59,11 +59,11 @@ public:
 // These must be kept synchronized with the ComicDataModel::columnIds enum
 QString ComicDataModel::columnNameDb[] = 
 { 
+	"%1.id",											// colIssueId
 	"document.comics.id",					// colId
-	"issues.id",									// colIssueId
-	"issues.number",							// colNumber
+	"%1.number",									// colNumber
 	"document.comics.owned",			// colOwned
-	"issues.publication_date",		// colDate
+	"%1.publication_date",				// colDate
 	"document.comics.condition",	// colCondition
 	"document.comics.price",			// colPrice
 	"document.comics.store",			// colStore
@@ -73,8 +73,8 @@ QString ComicDataModel::columnNameDb[] =
 };
 QString ComicDataModel::columnNameUi[] = 
 {
-	"Id",													// colId
 	"Issue",											// colIssueId
+	"Id",													// colId
 	QObject::tr("Number"),				// colNumber
 	"",														// colOwned
 	QObject::tr("Date"),					// colDate
@@ -98,9 +98,12 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 	: QSqlQueryModel(parent)
 {
 	// Build a list of column names
-	QStringList dbNames;
+	QStringList dbNames, dbNamesCustom;
 	for(int i = 0; i < _countof(columnNameDb); ++i)
-		dbNames.push_back(columnNameDb[i]);
+	{
+		dbNames.push_back(columnNameDb[i].arg("issues"));
+		dbNamesCustom.push_back(columnNameDb[i].arg("document.custom_issues"));
+	}
 
 	// Prepare & execute the query
 	QString conditions;
@@ -112,11 +115,24 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 	else if(!showOwned &&  showWanted && !showSold) conditions = "AND document.comics.owned = 'false' AND document.comics.sold_price IS NULL";
 	else if(!showOwned && !showWanted &&  showSold) conditions = "AND document.comics.owned = 'false' AND document.comics.sold_price IS NOT NULL";
 	else if(!showOwned && !showWanted && !showSold) conditions = "AND document.comics.id = -1";
-	QString sql = QString("SELECT %1 "
-												"FROM issues "
-												"%4 JOIN document.comics ON issues.id = document.comics.issue_id "
-												"WHERE issues.series_id = %2 %3 "
-												"ORDER BY CAST(issues.number AS INTEGER), issues.sort_code;").arg(dbNames.join(",")).arg(seriesId).arg(conditions).arg(showUntracked ? "LEFT" : "INNER");
+
+	QString sql1 = QString("SELECT %1, CAST(issues.number AS INTEGER) AS sort_ "
+												 "FROM issues "
+												 "%4 JOIN document.comics ON issues.id = document.comics.issue_id "
+												 "WHERE issues.series_id = %2 %3 ")
+													.arg(dbNames.join(", "))
+													.arg(seriesId)
+													.arg(conditions)
+													.arg(showUntracked ? "LEFT" : "INNER");
+	QString sql2 = QString("SELECT -%1, CAST(document.custom_issues.number AS INTEGER) AS sort_ "
+												 "FROM document.custom_issues "
+												 "%4 JOIN document.comics ON -document.custom_issues.id = document.comics.issue_id "
+												 "WHERE document.custom_issues.series_id = %2 %3 ")
+													.arg(dbNamesCustom.join(", "))
+													.arg(seriesId)
+													.arg(conditions)
+													.arg(showUntracked ? "LEFT" : "INNER");
+	QString sql = sql1 + QString(" UNION ") + sql2 + " ORDER BY sort_;";
 	setQuery(sql);
 
 	// Set up the UI names for each column
@@ -403,7 +419,7 @@ QVariant ComicDataModel::headerData(int section, Qt::Orientation orientation, in
 **********************************************************************:EDOC*/
 ComicList::ComicList(QWidget* parent)
   : QTableView(parent),
-    _model(0),
+    model_(0),
 		seriesId(-1),
 		showOwned(true),
 		showWanted(true),
@@ -415,7 +431,7 @@ ComicList::ComicList(QWidget* parent)
 
 ComicList::~ComicList()
 {
-  delete _model;
+  delete model_;
 }
 
 
@@ -429,15 +445,16 @@ ComicList::~ComicList()
 **********************************************************************:EDOC*/
 void ComicList::setModel(QAbstractItemModel* newModel)
 {
-	if(_model) { delete _model; }
-	_model = newModel;
+	if(model_) { delete model_; }
+	model_ = newModel;
 
-	QTableView::setModel(_model);
+	QTableView::setModel(model_);
 	connect(selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChange(QModelIndex)));
 	setColumnHidden(ComicDataModel::colId, true);					// Hide the "id" column
 	setColumnHidden(ComicDataModel::colIssueId, true);		// Hide the "issue id" column
 	setColumnHidden(ComicDataModel::colNumber, true);			// Hide the "number" column
 	setColumnHidden(ComicDataModel::colSalePrice, true);	// Hide the "sale price" column
+	setColumnHidden(ComicDataModel::colOrderBy, true);		// Hide the ORDER BY column
 	resizeColumnsToContents();
 }
 
@@ -463,6 +480,7 @@ void ComicList::setSeries(int _seriesId)
 						ComicList::setShowWanted (SLOT)
 						ComicList::setShowSold (SLOT)
 						ComicList::setShowUntracked (SLOT)
+						ComicList::refresh (SLOT)
 
 	Action:		Toggles filtering is the comic list by various criteria
 
@@ -485,6 +503,11 @@ void ComicList::setShowSold(bool show)
 void ComicList::setShowUntracked(bool show)
 {
   setModel(new ComicDataModel(seriesId, showOwned, showWanted, showSold, showUntracked = show, this));
+}
+
+void ComicList::refresh()
+{
+	setModel(new ComicDataModel(seriesId, showOwned, showWanted, showSold, showUntracked, this));
 }
 
 
@@ -554,7 +577,7 @@ void ComicList::paste()
 		for(int row = selection.top(); row <= selection.bottom(); ++row) 
 		{
 			for(int column = selection.left(); column <= selection.right(); ++column) 
-				((ComicDataModel*)_model)->setDataInternal(model()->index(row,column), str, Qt::EditRole);
+				((ComicDataModel*)model_)->setDataInternal(model()->index(row,column), str, Qt::EditRole);
 		}
 	}
 	else 
@@ -566,10 +589,10 @@ void ComicList::paste()
 			QStringList rowData = rows[row - selection.top()].split('\t');
 			// Paste into the appropriate cell
 			for(int column = selection.left(); column <= selection.right(); ++column) 
-				((ComicDataModel*)_model)->setDataInternal(model()->index(row,column), rowData[column-selection.left()], Qt::EditRole);
+				((ComicDataModel*)model_)->setDataInternal(model()->index(row,column), rowData[column-selection.left()], Qt::EditRole);
 		}
 	}
-	((ComicDataModel*)_model)->refreshView(selection);
+	((ComicDataModel*)model_)->refreshView(selection);
 }
 
 void ComicList::del()
@@ -578,7 +601,7 @@ void ComicList::del()
 		return;
   QItemSelectionRange selection = selectionModel()->selection().first();
 
-	if(selection.left() == ComicDataModel::colId)
+	if(selection.left() == 0)
 	{
 		// The user has requested that we delete entire records (by selecting
 		// entire rows using the vertical header).  Make sure this is what they
@@ -597,7 +620,7 @@ void ComicList::del()
 			query.exec();
 
 			// refresh by passing a brand-new model
-			setModel(new ComicDataModel(seriesId, showOwned, showWanted, showSold, showUntracked, this));
+			refresh();
 		}
 	}
 	else
@@ -606,9 +629,9 @@ void ComicList::del()
 		for(int row = selection.top(); row <= selection.bottom(); ++row) 
 		{
 			for(int column = selection.left(); column <= selection.right(); ++column) 
-				((ComicDataModel*)_model)->setDataInternal(model()->index(row,column), QVariant(), Qt::EditRole);
+				((ComicDataModel*)model_)->setDataInternal(model()->index(row,column), QVariant(), Qt::EditRole);
 		}
-		((ComicDataModel*)_model)->refreshView(selection);
+		((ComicDataModel*)model_)->refreshView(selection);
 	}
 }
 
@@ -651,9 +674,8 @@ void ComicList::duplicate()
 	int row = selection.top();
 	int col = selection.left();
 
-	// refresh by passing a brand-new model
-	setModel(new ComicDataModel(seriesId, showOwned, showWanted, showSold, showUntracked, this));
-	// re-select the old row
+	// refresh & re-select the old row
+	refresh();
 	selectionModel()->setCurrentIndex(model()->index(row,col), QItemSelectionModel::Select);
 }
 

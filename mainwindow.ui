@@ -87,6 +87,8 @@
      <string>&amp;Edit</string>
     </property>
     <addaction name="action_AddComics"/>
+    <addaction name="action_AddCustomSeries"/>
+    <addaction name="action_AddCustomIssue"/>
     <addaction name="action_DuplicateComic"/>
     <addaction name="separator"/>
     <addaction name="action_Undo"/>
@@ -478,6 +480,16 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="action_AddCustomSeries">
+   <property name="text">
+    <string>Add Custom Series...</string>
+   </property>
+  </action>
+  <action name="action_AddCustomIssue">
+   <property name="text">
+    <string>Add Custom Issue...</string>
    </property>
   </action>
  </widget>

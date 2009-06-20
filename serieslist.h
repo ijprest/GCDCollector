@@ -43,11 +43,13 @@ class QSqlQueryModel;
 class SeriesList : public QTableView
 {
   Q_OBJECT
+	Q_PROPERTY(int selectedSeries READ selectedSeries)
 public:
   SeriesList(QWidget* parent);
   ~SeriesList();
 
 	void setOnlyShowOwned(bool b) { onlyShowOwned = b; }
+	int selectedSeries() const;
 
 // interface
 signals:
@@ -60,7 +62,7 @@ private slots:
   void selectionChange(const QModelIndex& index);
 private:
 	bool onlyShowOwned;
-  QSqlQueryModel* model;
+  QSqlQueryModel* model_;
 };
 
 #endif // SERIESLIST_H

@@ -64,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->action_Exit, SIGNAL(triggered()), this, SLOT(close()));
 	// Edit menu
 	connect(ui->action_AddComics, SIGNAL(triggered()), this, SLOT(addComics()));
+	connect(ui->action_AddCustomSeries, SIGNAL(triggered()), this, SLOT(addCustomSeries()));
+	connect(ui->action_AddCustomIssue, SIGNAL(triggered()), this, SLOT(addCustomIssue()));
 	connect(ui->action_DuplicateComic, SIGNAL(triggered()), ui->issueList, SLOT(duplicate()));
 	connect(ui->action_Cut, SIGNAL(triggered()), ui->issueList, SLOT(cut())); ui->action_Cut->setShortcuts(QKeySequence::Cut);
 	connect(ui->action_Copy, SIGNAL(triggered()), ui->issueList, SLOT(copy())); ui->action_Copy->setShortcuts(QKeySequence::Copy);
@@ -165,6 +167,9 @@ bool MainWindow::createDatabase(const QString& filename)
 			return false;
 		}
 	}
+
+	// CREATE TABLE document.custom_issues (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, number INTEGER, series_id INTEGER, sort_code INTEGER, publication_date VARCHAR);
+	// CREATE TABLE document.custom_series (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name VARCHAR);
 
   return true;
 }
@@ -427,6 +432,80 @@ void MainWindow::setCoverId(int id)
 
 	// cover wasn't available
 	ui->coverLink->setText(tr("Drop a cover image here"));
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::addCustomSeries (SLOT)
+						MainWindow::addCustomIssue (SLOT)
+
+	Action:		Prompts the user for a name and inserts a custom series/issue
+
+**********************************************************************:EDOC*/
+void MainWindow::addCustomSeries()
+{
+	QString name = QInputDialog::getText(this, tr("Add Custom Series"), tr("Enter name for custom series:"));
+	if(!name.isEmpty())
+	{
+		QSqlQuery query;
+		query.prepare("INSERT INTO document.custom_series(name) VALUES (?);");
+		query.addBindValue(name);
+		if(!query.exec())
+		{
+			QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
+			return;
+		}
+
+		// Re-filter the series list to (hopefully) show the new series.
+		ui->comicTitles->filterList(ui->filterEdit->text());
+	}
+}
+
+void MainWindow::addCustomIssue()
+{
+	int seriesId = ui->comicTitles->selectedSeries();
+	if(seriesId != 0)
+	{
+		int currentMaxValue = 0;
+
+		// Try the lookup in the main issue list
+		{
+			QSqlQuery query;
+			query.prepare("SELECT MAX(CAST(number AS INTEGER)) FROM issues WHERE series_id=?");
+			query.addBindValue(seriesId);
+			query.exec();
+			if(query.next()) // only expecting one row
+				currentMaxValue = query.value(0).toInt();
+		}
+		// Try the lookup in the custom issue list
+		{
+			QSqlQuery query;
+			query.prepare("SELECT MAX(CAST(number AS INTEGER)) FROM document.custom_issues WHERE series_id=?");
+			query.addBindValue(seriesId);
+			query.exec();
+			if(query.next()) // only expecting one row
+				currentMaxValue = std::max(currentMaxValue, query.value(0).toInt());
+		}
+
+		bool ok = false;
+		int newValue = QInputDialog::getInt(this, tr("Add Custom Issue"), tr("Enter number for custom issue:"), currentMaxValue + 1, 0, 10000, 1, &ok);
+		if(ok)
+		{
+			QSqlQuery query;
+			query.prepare("INSERT INTO document.custom_issues(series_id,number) VALUES (?,?);");
+			query.addBindValue(seriesId);
+			query.addBindValue(newValue);
+			if(!query.exec())
+			{
+				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
+				return;
+			}
+
+			// Refresh view
+			ui->issueList->refresh();
+		}
+	}
 }
 
 /* end of file */

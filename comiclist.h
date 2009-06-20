@@ -63,12 +63,14 @@ public slots:
 	void del();
 	void duplicate();
 
+	void refresh();
+
 // implementation
 private slots:
   void selectionChange(const QModelIndex& index);
 private:
 	void setModel(QAbstractItemModel* model);
-  QAbstractItemModel* _model;
+  QAbstractItemModel* model_;
 	int seriesId;
 	bool showOwned, showWanted, showSold, showUntracked;
 };
