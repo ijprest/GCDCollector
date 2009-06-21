@@ -40,7 +40,7 @@
 class ComicDataModel : public QSqlQueryModel
 {
 public:
-	enum ColumnIds { colIssueId, colId, colNumber, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes, colSalePrice, colOrderBy };
+	enum ColumnIds { colOrderBy, colIssueId, colNumber, colId, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes, colSalePrice };
 	enum ItemStatus { statusNone, statusOwned, statusWanted, statusOrdered, statusSold, statusForSale, statusUntracked };
 	static QString columnNameDb[];
 	static QString columnNameUi[];
@@ -65,23 +65,25 @@ private:
 // These must be kept synchronized with the ComicDataModel::columnIds enum
 QString ComicDataModel::columnNameDb[] = 
 { 
-	"%1.id",											// colIssueId
-	"document.comics.id",					// colId
-	"%1.number",									// colNumber
-	"document.comics.owned",			// colOwned
-	"%1.publication_date",				// colDate
-	"document.comics.condition",	// colCondition
-	"document.comics.price",			// colPrice
-	"document.comics.store",			// colStore
-	"document.comics.user_id",		// colUserId
-	"document.comics.notes",			// colNotes
-	"document.comics.sold_price",	// colSoldPrice
+	"CAST(%1.number AS INTEGER) AS order_by",	// colOrderBy
+	"%1.id",																	// colIssueId
+	"%1.number",															// colNumber
+	"document.comics.id",											// colId
+	"document.comics.owned",									// colOwned
+	"%1.publication_date",										// colDate
+	"document.comics.condition",							// colCondition
+	"document.comics.price",									// colPrice
+	"document.comics.store",									// colStore
+	"document.comics.user_id",								// colUserId
+	"document.comics.notes",									// colNotes
+	"document.comics.sold_price",							// colSoldPrice
 };
 QString ComicDataModel::columnNameUi[] = 
 {
+	QObject::tr("Sort"),					// colOrderBy
 	"Issue",											// colIssueId
-	"Id",													// colId
 	QObject::tr("Number"),				// colNumber
+	"Id",													// colId
 	"",														// colOwned
 	QObject::tr("Date"),					// colDate
 	QObject::tr("Condition"),			// colCondition
@@ -120,9 +122,9 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 	else if(!showOwned &&  showWanted &&  showSold) conditions = "AND document.comics.owned = 'false'";
 	else if(!showOwned &&  showWanted && !showSold) conditions = "AND document.comics.owned = 'false' AND document.comics.sold_price IS NULL";
 	else if(!showOwned && !showWanted &&  showSold) conditions = "AND document.comics.owned = 'false' AND document.comics.sold_price IS NOT NULL";
-	else if(!showOwned && !showWanted && !showSold) conditions = "AND document.comics.id = -1";
+	else if(!showOwned && !showWanted && !showSold) conditions = "AND document.comics.id = 0";
 
-	QString sql1 = QString("SELECT %1, CAST(issues.number AS INTEGER) AS sort_ "
+	QString sql1 = QString("SELECT %1 "
 												 "FROM issues "
 												 "%4 JOIN document.comics ON issues.id = document.comics.issue_id "
 												 "WHERE issues.series_id = %2 %3 ")
@@ -130,7 +132,7 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 													.arg(seriesId)
 													.arg(conditions)
 													.arg(showUntracked ? "LEFT" : "INNER");
-	QString sql2 = QString("SELECT -%1, CAST(document.custom_issues.number AS INTEGER) AS sort_ "
+	QString sql2 = QString("SELECT -%1 "
 												 "FROM document.custom_issues "
 												 "%4 JOIN document.comics ON -document.custom_issues.id = document.comics.issue_id "
 												 "WHERE document.custom_issues.series_id = %2 %3 ")
@@ -138,7 +140,7 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 													.arg(seriesId)
 													.arg(conditions)
 													.arg(showUntracked ? "LEFT" : "INNER");
-	QString sql = sql1 + QString(" UNION ") + sql2 + " ORDER BY sort_;";
+	QString sql = sql1 + QString(" UNION ") + sql2 + " ORDER BY order_by;";
 	setQuery(sql);
 
 	// Set up the UI names for each column
@@ -215,23 +217,26 @@ ComicDataModel::ItemStatus ComicDataModel::rowStatus( const QModelIndex &index )
 **********************************************************************:EDOC*/
 QVariant ComicDataModel::data(const QModelIndex &index, int role) const
 {
-	switch(rowStatus(index))
+	if(role == Qt::BackgroundRole || role == Qt::ForegroundRole)
 	{
-	case statusUntracked:
-		if(role == Qt::BackgroundRole) return QColor(255,224,224);	// red
-		break;
-	case statusWanted:
-		if(role == Qt::BackgroundRole) return QColor(224,224,255);	// blue
-		break;
-	case statusOrdered:
-		if(role == Qt::BackgroundRole) return QColor(224,255,224);	// green
-		break;
-	case statusSold:
-		if(role == Qt::ForegroundRole) return QColor(128,128,128);	// grey foreground
-		break;
-	case statusForSale:
-		if(role == Qt::ForegroundRole) return QColor(255,0,0);			// red foreground
-		break;
+		switch(rowStatus(index))
+		{
+		case statusUntracked:
+			if(role == Qt::BackgroundRole) return QColor(255,224,224);	// red
+			break;
+		case statusWanted:
+			if(role == Qt::BackgroundRole) return QColor(224,224,255);	// blue
+			break;
+		case statusOrdered:
+			if(role == Qt::BackgroundRole) return QColor(224,255,224);	// green
+			break;
+		case statusSold:
+			if(role == Qt::ForegroundRole) return QColor(128,128,128);	// grey foreground
+			break;
+		case statusForSale:
+			if(role == Qt::ForegroundRole) return QColor(255,0,0);			// red foreground
+			break;
+		}
 	}
 	
 	switch(index.column())
