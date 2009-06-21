@@ -54,6 +54,12 @@ public:
 
 	bool setDataInternal(const QModelIndex &index, const QVariant &value, int role);
 	void refreshView(const QItemSelectionRange range);
+
+private:
+	QVariant eval(const QString& str) const;
+	QVariant evalExpression(const QChar* str, int &pos) const;
+	QVariant evalTerm(const QChar* str, int &pos) const;
+	QVariant evalFactor(const QChar* str, int &pos) const;
 };
 
 // These must be kept synchronized with the ComicDataModel::columnIds enum
@@ -251,7 +257,7 @@ QVariant ComicDataModel::data(const QModelIndex &index, int role) const
 			{
 				QVariant value = QSqlQueryModel::data(index, role);
 				if(!value.isNull())
-					return QString("$%1").arg(value.toDouble(),0,'f',2);
+					return QString("$%1").arg(eval(value.toString()).toDouble(),0,'f',2);
 			}
 		}
 		break;
@@ -334,8 +340,6 @@ bool ComicDataModel::setDataInternal(const QModelIndex &index, const QVariant &v
 			updateQuery.addBindValue(value == Qt::Checked || value == "true");
 			break;
 		case colPrice:
-			updateQuery.addBindValue((value.toString().length()==0) ? QVariant(QVariant::Double) : value.toDouble());
-			break;
 		case colCondition:
 		case colStore:
 		case colUserId:
@@ -372,7 +376,8 @@ void ComicDataModel::refreshView(const QItemSelectionRange range)
 	query().finish();
 	query().exec();
 	query().seek(pos);
-	dataChanged(range.topLeft(), range.bottomRight());
+	// Refresh entire rows in case highlighting has changed
+	dataChanged(range.topLeft().sibling(range.top(), 0), range.bottomRight().sibling(range.bottom(),this->columnCount()));
 }
 
 
@@ -404,6 +409,124 @@ QVariant ComicDataModel::headerData(int section, Qt::Orientation orientation, in
 		}
 	}
 	return QSqlQueryModel::headerData(section, orientation, role);
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			QVariant eval(const QString& str) const;
+
+						ComicDataModel::evalExpression
+						ComicDataModel::evalTerm
+						ComicDataModel::evalFactor
+
+	Action:		Simple recursive-descent parser to evaluate a mathematical
+						expression.
+
+						EXPRESSION := TERM
+						EXPRESSION := TERM ('+'|'-') EXPRESSION
+						TERM := FACTOR
+						TERM := FACTOR '*'|'/' TERM
+						FACTOR := NUMBER
+						FACTOR := '(' EXPRESSION ')'
+
+**********************************************************************:EDOC*/
+QVariant ComicDataModel::eval(const QString& str) const
+{
+	int pos = 0;
+	const QChar* data = str.constData();
+	QVariant result = evalExpression(data, pos);
+	while(data[pos].isSpace()) ++pos;
+	if(data[pos] != QChar::Null)
+		return QVariant();
+	return result;
+}
+
+QVariant ComicDataModel::evalExpression(const QChar* str, int &pos) const
+{
+	// Parse the left-hand term in the expression
+	QVariant result = evalTerm(str, pos);
+	while(str[pos].isSpace()) ++pos;
+
+	// Next character should be an operator; otherwise, exit
+	QChar op = str[pos];
+	if( op != '+' && op != '-' )
+		return result;
+	++pos;
+
+	// Parse the right-hand side of the expression
+	QVariant rhs = evalExpression(str, pos);
+	if( result.type() != QVariant::Double || rhs.type() != QVariant::Double ) 
+		return QVariant(); // error
+
+	// Compute result & return
+	result =  (op == '+')		? result.toDouble() + rhs.toDouble()
+					/*(op == '-')*/	: result.toDouble() - rhs.toDouble();
+	return result;
+}
+
+QVariant ComicDataModel::evalTerm(const QChar* str, int &pos) const
+{
+	// Parse the left-hand factor in the term
+	QVariant result = evalFactor(str, pos);
+	while(str[pos].isSpace()) ++pos;
+
+	// Next character should be an operator; otherwise, exit
+	QChar op = str[pos];
+	if( op != '*' && op != '/' )
+		return result;
+	++pos;
+
+	// Parse the right-hand side of the term
+	QVariant rhs = evalTerm(str, pos);
+	if( result.type() != QVariant::Double || rhs.type() != QVariant::Double ) 
+		return QVariant(); // error
+
+	// Compute result & return
+	if(op == '*')
+		result = result.toDouble() * rhs.toDouble();
+	else if(rhs.toDouble() == 0.0) // check for divide-by-zero
+		result = QVariant();
+	else //(op == '/')
+		result = result.toDouble() / rhs.toDouble();
+	return result;
+}
+
+QVariant ComicDataModel::evalFactor(const QChar* str, int &pos) const
+{
+	// Expecting a number or parentheses
+	while(str[pos].isSpace()) ++pos;
+	if(str[pos] == '(') 
+	{
+		++pos;
+		QVariant result = evalExpression(str, pos);
+		while(str[pos].isSpace()) ++pos;
+		if(str[pos++] != ')')
+			return QVariant(); // error
+		return result;
+	}
+
+	// Check for unary minus operator
+	bool negative = false;
+	if(str[pos] == '-')
+	{
+		++pos;
+		negative = true;
+		while(str[pos].isSpace()) ++pos;
+	}
+
+	// Parse a number
+	QString token;
+	while(str[pos].isDigit() || str[pos] == '.')
+		token += str[pos++];
+	while(str[pos].isDigit())
+		token += str[pos++];
+
+	bool ok;
+	double value = token.toDouble(&ok);
+	if(ok)
+		return negative ? -value : value;
+	return QVariant();
 }
 
 
@@ -591,6 +714,8 @@ void ComicList::paste()
 		{
 			// Split the line of text
 			QStringList rowData = rows[row - selection.top()].split('\t');
+			while(rowData.size() < selection.width())
+				rowData.push_back(QString());
 			// Paste into the appropriate cell
 			for(int column = selection.left(); column <= selection.right(); ++column) 
 				((ComicDataModel*)model_)->setDataInternal(model()->index(row,column), rowData[column-selection.left()], Qt::EditRole);
