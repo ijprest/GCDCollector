@@ -1,25 +1,43 @@
 <html>
 <head>
 <title>GCDCollector - {{ page.title }}</title>
+<link rel="stylesheet" href="css/screen.css" type="text/css" media="screen, projection" />  
+<link rel="stylesheet" href="css/print.css" type="text/css" media="print" />
+<!--[if IE]><link rel="stylesheet" href="css/ie.css" type="text/css" media="screen, projection" /><![endif]-->  
+<style>
+#menu { padding-top: 18px; }
+#menu ul { list-style-type: none; }
+#footer { text-align:center; font-style:italic; }
+</style>
 </head>
 <body>
-<img style='float:right' src='images/logo.png'/>
-<table>
-<tr>
-<td valign='top' style='padding-right:3em'>
-<ul>
-<li><a href='index.html'>Home</a></li>
-<li><a href='screenshots.html'>Screenshots</a></li>
-<li><a href='license.html'>License</a></li>
-<li><a href='http://github.com/ijprest/GCDCollector/downloads'>Downloads</a></li>
-<li><a href='http://github.com/ijprest/GCDCollector/tree/master'>Source</a></li>
-<li><a href='http://wiki.github.com/ijprest/GCDCollector'>Wiki</a></li>
-<li><a href='http://github.com/ijprest/GCDCollector/issues'>Bugs/Feature Resquests</a></li>
-</td>
-<td>
-{{ content }}
-</td>
-</tr>
-</table>
+
+<div class='container'>
+  <div id='header' class='span-24 last'>&nbsp;</div>
+  
+  <div id='left-col' class='span-5'>
+    <img class='last' src='images/logo.png'/>
+    <div id='menu' class='span-5 last'>
+      <ul>
+      <li><a href='index.html'>Home</a></li>
+      <li><a href='screenshots.html'>Screenshots</a></li>
+      <li><a href='license.html'>License</a></li>
+      <li><a href='http://github.com/ijprest/GCDCollector/downloads'>Downloads</a></li>
+      <li><a href='http://github.com/ijprest/GCDCollector/tree/master'>Source</a></li>
+      <li><a href='http://wiki.github.com/ijprest/GCDCollector'>Wiki</a></li>
+      <li><a href='http://github.com/ijprest/GCDCollector/issues'>Bugs / Feature Requests</a></li>
+      </td>
+    </div>
+  </div>
+  
+  <div id='content' class='span-19 last'>
+    <h2>GCDCollector - {{ page.title }}</h2>
+    {{ content }}
+  </div>
+
+  <div id='footer' class='span-24 last'>Copyright &copy; 2009 Ian Prest; All rights reserved.</div>
+</div>
+
+
 </body>
 </html>
