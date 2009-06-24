@@ -40,7 +40,7 @@
 class ComicDataModel : public QSqlQueryModel
 {
 public:
-	enum ColumnIds { colOrderBy, colIssueId, colNumber, colId, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes, colSalePrice };
+	enum ColumnIds { colIssueId, colOrderBy, colNumber, colId, colOwned, colDate, colCondition, colPrice, colStore, colUserId, colNotes, colSalePrice };
 	enum ItemStatus { statusNone, statusOwned, statusWanted, statusOrdered, statusSold, statusForSale, statusUntracked };
 	static QString columnNameDb[];
 	static QString columnNameUi[];
@@ -65,8 +65,8 @@ private:
 // These must be kept synchronized with the ComicDataModel::columnIds enum
 QString ComicDataModel::columnNameDb[] = 
 { 
-	"CAST(%1.number AS INTEGER) AS order_by",	// colOrderBy
-	"%1.id",																	// colIssueId
+	"%2%1.id",																// colIssueId
+	"CAST(%1.number AS INTEGER) AS sort_by",	// colOrderBy
 	"%1.number",															// colNumber
 	"document.comics.id",											// colId
 	"document.comics.owned",									// colOwned
@@ -80,8 +80,8 @@ QString ComicDataModel::columnNameDb[] =
 };
 QString ComicDataModel::columnNameUi[] = 
 {
-	QObject::tr("Sort"),					// colOrderBy
 	"Issue",											// colIssueId
+	QObject::tr("Sort"),					// colOrderBy
 	QObject::tr("Number"),				// colNumber
 	"Id",													// colId
 	"",														// colOwned
@@ -109,8 +109,8 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 	QStringList dbNames, dbNamesCustom;
 	for(int i = 0; i < _countof(columnNameDb); ++i)
 	{
-		dbNames.push_back(columnNameDb[i].arg("issues"));
-		dbNamesCustom.push_back(columnNameDb[i].arg("document.custom_issues"));
+		dbNames.push_back(columnNameDb[i].arg("issues",""));
+		dbNamesCustom.push_back(columnNameDb[i].arg("document.custom_issues","-"));
 	}
 
 	// Prepare & execute the query
@@ -132,7 +132,7 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 													.arg(seriesId)
 													.arg(conditions)
 													.arg(showUntracked ? "LEFT" : "INNER");
-	QString sql2 = QString("SELECT -%1 "
+	QString sql2 = QString("SELECT %1 "
 												 "FROM document.custom_issues "
 												 "%4 JOIN document.comics ON -document.custom_issues.id = document.comics.issue_id "
 												 "WHERE document.custom_issues.series_id = %2 %3 ")
@@ -140,7 +140,7 @@ ComicDataModel::ComicDataModel(int seriesId, bool showOwned, bool showWanted, bo
 													.arg(seriesId)
 													.arg(conditions)
 													.arg(showUntracked ? "LEFT" : "INNER");
-	QString sql = sql1 + QString(" UNION ") + sql2 + " ORDER BY order_by;";
+	QString sql = sql1 + QString(" UNION ") + sql2 + " ORDER BY sort_by, number;";
 	setQuery(sql);
 
 	// Set up the UI names for each column
