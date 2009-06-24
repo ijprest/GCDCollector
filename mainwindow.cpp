@@ -36,6 +36,16 @@
 #include "ui_mainwindow.h"
 #include "addcomics.h"
 
+struct QueryHelper
+{
+	QSqlQuery query_;
+	QueryHelper(const QString& sql) { query_.prepare(sql); }
+	QueryHelper& arg(const QVariant& val) { query_.addBindValue(val); return *this; }
+	operator QVariant() { return exec(); }
+	QVariant exec() { if(!query_.exec() || !query_.next()) return QVariant(); return query_.value(0); }
+};
+
+
 /////////////////////////////////////////////////////////////////////////////
 // MainWindow window class
 /////////////////////////////////////////////////////////////////////////////
@@ -117,6 +127,26 @@ MainWindow::~MainWindow()
 
 /*SDOC:**********************************************************************
 
+	Name:			MainWindow::executeSql
+
+	Action:		Prepare & execute a simple SQL statement
+
+**********************************************************************:EDOC*/
+bool MainWindow::executeSql(QString sql, QSqlDatabase& db)
+{
+	QSqlQuery query(db);
+	query.prepare(sql);
+	if( !query.exec() )
+	{
+		QMessageBox::critical(0, tr("Database Error"), query.lastError().text());
+		return false;
+	}
+	return true;
+}
+
+
+/*SDOC:**********************************************************************
+
 	Name:			MainWindow::createDatabase
 
 	Action:		Creates the necessary tables in the user-database.
@@ -124,54 +154,35 @@ MainWindow::~MainWindow()
 **********************************************************************:EDOC*/
 bool MainWindow::createDatabase(const QString& filename)
 {
-  if(!connectDatabase(filename))
-    return false;
-
-	// document.comics
+	// Create the database
 	{
-		QSqlQuery createTable;
-		createTable.prepare("CREATE TABLE document.comics ("
-													"id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-													"issue_id INTEGER NOT NULL, "
-													"condition VARCHAR(32), "
-													"store VARCHAR(32), "
-													"price DOUBLE, "
-													"notes VARCHAR, "
-													"owned TINYINT(1) NOT NULL DEFAULT ('false'), "
-													"sold_price DOUBLE, "
-													"user_id VARCHAR(32));");
-		if( !createTable.exec() )
+		QSqlDatabase newDb = QSqlDatabase::addDatabase("QSQLITE", "createDatabase");
+		newDb.setDatabaseName(filename);
+		if (!newDb.open()) 
 		{
-			QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
+			QMessageBox::critical(0, QObject::tr("Database Error"), newDb.lastError().text());
 			return false;
 		}
-	}
-
-	{
-		QSqlQuery createIndex;
-		createIndex.prepare("CREATE INDEX document.comics_issueid on document.comics (issue_id ASC)");
-		if( !createIndex.exec() )
-		{
-			QMessageBox::critical(0, tr("Database Error"), createIndex.lastError().text());
+		if(!executeSql("PRAGMA encoding = \"UTF-8\";", newDb))
 			return false;
-		}
-	}
 
-	// document.images
-	{
-		QSqlQuery createTable;
-		createTable.prepare("CREATE TABLE document.images (id INTEGER PRIMARY KEY NOT NULL, data BLOB);");
-		if( !createTable.exec() )
-		{
-			QMessageBox::critical(0, tr("Database Error"), createTable.lastError().text());
+		// comics
+		if(!executeSql("CREATE TABLE comics (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, issue_id INTEGER NOT NULL, condition VARCHAR(32), store VARCHAR(32), price DOUBLE, notes VARCHAR, owned TINYINT(1) NOT NULL DEFAULT ('false'), sold_price DOUBLE, user_id VARCHAR(32));", newDb))
 			return false;
-		}
+		if(!executeSql("CREATE INDEX comics_issueid on comics (issue_id ASC)", newDb))
+			return false;
+		// images
+		if(!executeSql("CREATE TABLE images (id INTEGER PRIMARY KEY NOT NULL, data BLOB);", newDb))
+			return false;
+		// custom_issues / custom_series
+		if(!executeSql("CREATE TABLE custom_issues (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, number INTEGER, series_id INTEGER, sort_code INTEGER, publication_date VARCHAR);", newDb))
+			return false;
+		if(!executeSql("CREATE TABLE custom_series (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name VARCHAR);", newDb))
+			return false;
 	}
+	QSqlDatabase::removeDatabase("createDatabase");
 
-	// CREATE TABLE document.custom_issues (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, number INTEGER, series_id INTEGER, sort_code INTEGER, publication_date VARCHAR);
-	// CREATE TABLE document.custom_series (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name VARCHAR);
-
-  return true;
+  return connectDatabase(filename);
 }
 
 
@@ -228,7 +239,7 @@ void MainWindow::closeDatabase()
 	Action:		Handles the File/New command
 
 **********************************************************************:EDOC*/
-void MainWindow::newDatabase()
+bool MainWindow::newDatabase()
 {
   // Get a new filename
   QString filename = QFileDialog::getSaveFileName(this, tr("New Database..."), ".", tr("Database files (*.comicdb);;All files (*.*)"));
@@ -238,11 +249,21 @@ void MainWindow::newDatabase()
     closeDatabase();
 
     // Delete any existing file
-    QFile::remove(filename);
+		if(QFile::exists(filename) && !QFile::remove(filename))
+		{
+			QMessageBox::critical(this, tr("Database Error"), tr("Could not overwrite existing file."));
+			return false;
+		}
 
     // Create a new database
-    createDatabase(filename);
+		if(!createDatabase(filename))
+		{
+			closeDatabase();
+			return false;
+		}
+		return true;
   }
+	return false;
 }
 
 
@@ -253,7 +274,7 @@ void MainWindow::newDatabase()
 	Action:		Handles the File/Open command
 
 **********************************************************************:EDOC*/
-void MainWindow::openDatabase()
+bool MainWindow::openDatabase()
 {
   // Get a new filename
   QString filename = QFileDialog::getOpenFileName(this, tr("Open Database..."), ".", tr("Database files (*.comicdb);;All files (*.*)"));
@@ -263,8 +284,9 @@ void MainWindow::openDatabase()
     closeDatabase();
 
     // Open the new database
-    connectDatabase(filename);
+    return connectDatabase(filename);
   }
+	return false;
 }
 
 
@@ -382,11 +404,8 @@ void MainWindow::addItems(const QList<int>& items)
 	{
 		for(QList<int>::const_iterator i = items.begin(); i != items.end(); ++i)
 		{
-			QSqlQuery query(db);
-			query.prepare(QString("INSERT INTO document.comics(issue_id) VALUES (%1);").arg(*i));
-			if(!query.exec())
+			if(!executeSql(QString("INSERT INTO document.comics(issue_id) VALUES (%1);").arg(*i)))
 			{
-				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
 				db.rollback();
 				return;
 			}
@@ -408,12 +427,6 @@ void MainWindow::setCoverId(int id)
 	query.exec();
 	if(query.next()) // only expecting one row
 	{
-		/*
-		href = QString("http://www.comics.org/graphics/covers/%1/400/%1_4_%2.jpg")
-											.arg(query.value(0).toInt())			// series_id
-											.arg(query.value(1).toString());	// sort_code
-		*/
-
 		int zoom = 0;
 		if(query.value(5).toBool()) // large image
 			zoom = 4;
@@ -421,17 +434,15 @@ void MainWindow::setCoverId(int id)
 			zoom = 2;
 		else if(query.value(3).toBool()) // small image
 			zoom = 1;
-
 		if(zoom > 0)
 		{
-			QString href = QString("http://www.comics.org/coverview.lasso?id=%1&zoom=%2").arg(id).arg(zoom);
-			ui->coverLink->setText(QString("<a href='%1'>See Cover Online</a>").arg(href));
+			ui->coverLink->setText(QString("<a href='http://www.comics.org/coverview.lasso?id=%1&zoom=%2'>%3</a>").arg(id).arg(zoom).arg(tr("See Cover Online")));
 			return;
 		}
 	}
 
 	// cover wasn't available
-	ui->coverLink->setText(tr("Drop a cover image here"));
+	ui->coverLink->setText(tr("No online cover available"));
 }
 
 
@@ -467,35 +478,18 @@ void MainWindow::addCustomIssue()
 	int seriesId = ui->comicTitles->selectedSeries();
 	if(seriesId != 0)
 	{
-		int currentMaxValue = 0;
+		// Try the lookup in the main issue list & custom issue list
+		int currentMaxValue = std::max(
+			QueryHelper("SELECT MAX(CAST(number AS INTEGER)) FROM issues WHERE series_id=?").arg(seriesId).exec().toInt(),
+			QueryHelper("SELECT MAX(CAST(number AS INTEGER)) FROM document.custom_issues WHERE series_id=?").arg(seriesId).exec().toInt());
 
-		// Try the lookup in the main issue list
-		{
-			QSqlQuery query;
-			query.prepare("SELECT MAX(CAST(number AS INTEGER)) FROM issues WHERE series_id=?");
-			query.addBindValue(seriesId);
-			query.exec();
-			if(query.next()) // only expecting one row
-				currentMaxValue = query.value(0).toInt();
-		}
-		// Try the lookup in the custom issue list
-		{
-			QSqlQuery query;
-			query.prepare("SELECT MAX(CAST(number AS INTEGER)) FROM document.custom_issues WHERE series_id=?");
-			query.addBindValue(seriesId);
-			query.exec();
-			if(query.next()) // only expecting one row
-				currentMaxValue = std::max(currentMaxValue, query.value(0).toInt());
-		}
-
-		bool ok = false;
-		int newValue = QInputDialog::getInt(this, tr("Add Custom Issue"), tr("Enter number for custom issue:"), currentMaxValue + 1, 0, 10000, 1, &ok);
-		if(ok)
+		QString number = QInputDialog::getText(this, tr("Add Custom Issue"), tr("Enter number for custom issue:"), QLineEdit::Normal, QString("%1").arg(currentMaxValue + 1));
+		if(!number.isEmpty())
 		{
 			QSqlQuery query;
 			query.prepare("INSERT INTO document.custom_issues(series_id,number) VALUES (?,?);");
 			query.addBindValue(seriesId);
-			query.addBindValue(newValue);
+			query.addBindValue(number);
 			if(!query.exec())
 			{
 				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());

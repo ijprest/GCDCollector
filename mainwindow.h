@@ -53,8 +53,8 @@ protected:
 
 private slots:;
   void closeDatabase();
-  void openDatabase();
-  void newDatabase();
+  bool openDatabase();
+  bool newDatabase();
 	void addComics();
 	void addCustomSeries();
 	void addCustomIssue();
@@ -66,6 +66,7 @@ private slots:;
 private:
   bool createDatabase(const QString& filename);
   bool connectDatabase(const QString& filename);
+	bool executeSql(QString sql, QSqlDatabase& db = QSqlDatabase::database());
 
 	void writeSettings();
 	void readSettings();
