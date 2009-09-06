@@ -35,6 +35,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "addcomics.h"
+#include <tchar.h>
 
 struct QueryHelper
 {
@@ -518,14 +519,27 @@ void MainWindow::addCustomIssue()
 		QString number = QInputDialog::getText(this, tr("Add Custom Issue"), tr("Enter number for custom issue:"), QLineEdit::Normal, QString("%1").arg(currentMaxValue + 1), &ok);
 		if(ok && !number.isEmpty())
 		{
-			QSqlQuery query;
-			query.prepare("INSERT INTO document.custom_issues(series_id,number) VALUES (?,?);");
-			query.addBindValue(seriesId);
-			query.addBindValue(number);
-			if(!query.exec())
+			QRegExp re("(\\d+)-(\\d+)");
+			if(re.exactMatch(number))
 			{
-				QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
-				return;
+				// Adding a range of numbers
+				QSqlDatabase db = QSqlDatabase::database();
+				if(db.isValid() && db.transaction())
+				{
+					int start = re.cap(1).toInt();
+					int end = re.cap(2).toInt();
+					for(int i = start; i <= end; ++i) 
+					{
+						number.setNum(i);
+						addSingleCustomIssue(seriesId, number);
+					}
+				}
+				db.commit();
+			}
+			else
+			{
+				// Adding a single issue
+				addSingleCustomIssue(seriesId, number);
 			}
 
 			// Refresh view
@@ -533,6 +547,20 @@ void MainWindow::addCustomIssue()
 		}
 	}
 }
+
+void MainWindow::addSingleCustomIssue(int seriesId, QString number)
+{
+	QSqlQuery query;
+	query.prepare("INSERT INTO document.custom_issues(series_id,number) VALUES (?,?);");
+	query.addBindValue(seriesId);
+	query.addBindValue(number);
+	if(!query.exec())
+	{
+		QMessageBox::critical(this, tr("Database Error"), query.lastError().text());
+		return;
+	}
+}
+
 
 
 /*SDOC:**********************************************************************

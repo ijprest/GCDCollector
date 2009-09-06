@@ -77,6 +77,9 @@ private:
 	void readSettings();
 	QSettings& settings() { return settings_; }
 
+	// helpers
+	void addSingleCustomIssue(int seriesId, QString number);
+
 	QSettings settings_;
 	AddComics* addComicsDialog;
   Ui::MainWindow *ui;
