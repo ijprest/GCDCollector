@@ -62,7 +62,8 @@ MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent),
     ui(new Ui::MainWindow),
 		settings_("GCDCollector", "1.0"),
-		addComicsDialog(0)
+		addComicsDialog(0),
+		m_connected(false)
 {
 	// Initialize UI
   ui->setupUi(this);
@@ -74,13 +75,23 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->action_Exit, SIGNAL(triggered()), this, SLOT(close()));
 	// Edit menu
 	connect(ui->action_AddComics, SIGNAL(triggered()), this, SLOT(addComics()));
+	connect(this, SIGNAL(connected(bool)), ui->action_AddComics, SLOT(setEnabled(bool)));
 	connect(ui->action_AddCustomSeries, SIGNAL(triggered()), this, SLOT(addCustomSeries()));
+	connect(this, SIGNAL(connected(bool)), ui->action_AddCustomSeries, SLOT(setEnabled(bool)));
 	connect(ui->action_AddCustomIssue, SIGNAL(triggered()), this, SLOT(addCustomIssue()));
+	connect(this, SIGNAL(connected(bool)), ui->action_AddCustomIssue, SLOT(setEnabled(bool)));
 	connect(ui->action_DuplicateComic, SIGNAL(triggered()), ui->issueList, SLOT(duplicate()));
+	connect(this, SIGNAL(connected(bool)), ui->action_DuplicateComic, SLOT(setEnabled(bool)));
 	connect(ui->action_Cut, SIGNAL(triggered()), ui->issueList, SLOT(cut())); ui->action_Cut->setShortcuts(QKeySequence::Cut);
+	connect(this, SIGNAL(connected(bool)), ui->action_Cut, SLOT(setEnabled(bool)));
 	connect(ui->action_Copy, SIGNAL(triggered()), ui->issueList, SLOT(copy())); ui->action_Copy->setShortcuts(QKeySequence::Copy);
+	connect(this, SIGNAL(connected(bool)), ui->action_Copy, SLOT(setEnabled(bool)));
 	connect(ui->action_Paste, SIGNAL(triggered()), ui->issueList, SLOT(paste())); ui->action_Paste->setShortcuts(QKeySequence::Paste);
+	connect(this, SIGNAL(connected(bool)), ui->action_Paste, SLOT(setEnabled(bool)));
 	connect(ui->action_Delete, SIGNAL(triggered()), ui->issueList, SLOT(del())); ui->action_Delete->setShortcuts(QKeySequence::Delete);
+	connect(this, SIGNAL(connected(bool)), ui->action_Delete, SLOT(setEnabled(bool)));
+	connect(this, SIGNAL(connected(bool)), ui->action_Undo, SLOT(setEnabled(bool)));
+	connect(this, SIGNAL(connected(bool)), ui->action_Redo, SLOT(setEnabled(bool)));
 	// View menu
 	connect(ui->action_ShowOwnedIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowOwned(bool)));
 	connect(ui->action_ShowWantedIssues, SIGNAL(toggled(bool)), ui->issueList, SLOT(setShowWanted(bool)));
@@ -112,6 +123,9 @@ MainWindow::MainWindow(QWidget *parent)
 			connectDatabase(fileInfo.absoluteFilePath());
 		}
 	}
+
+	// Make sure UI state is consistent
+	connected(m_connected);
 
 	// The window icon (used by the about box)
 	QIcon icon(":/GCDCollector/Resources/short-box.png");
@@ -208,6 +222,7 @@ bool MainWindow::connectDatabase(const QString& filename)
 
 	// refresh the main window's series list
 	refresh();
+	connected(m_connected = true);
   return true;
 }
 
@@ -221,6 +236,9 @@ bool MainWindow::connectDatabase(const QString& filename)
 **********************************************************************:EDOC*/
 void MainWindow::closeDatabase()
 {
+	if(!m_connected)
+		return;
+
 	QSqlQuery detach;
 	detach.prepare("DETACH DATABASE document;");
 	if( !detach.exec() )
@@ -228,7 +246,8 @@ void MainWindow::closeDatabase()
 		QMessageBox::critical(0, tr("Database Error"), detach.lastError().text());
 		return;
 	}
-  setWindowTitle(tr("Comic Collector"));
+	setWindowTitle(tr("Comic Collector"));
+	connected(m_connected = false);
 
 	// Clear the filter text and refresh the UI
 	ui->filterEdit->setText("");

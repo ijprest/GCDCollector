@@ -51,6 +51,9 @@ public:
 protected:
 	void closeEvent(QCloseEvent* event);
 
+signals:
+	void connected(bool isConnected);
+
 private slots:;
   void closeDatabase();
   bool openDatabase();
@@ -77,6 +80,7 @@ private:
 	QSettings settings_;
 	AddComics* addComicsDialog;
   Ui::MainWindow *ui;
+	bool m_connected;
 };
 
 #endif // MAINWINDOW_H
