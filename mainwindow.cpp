@@ -486,8 +486,9 @@ void MainWindow::setCoverId(int id)
 **********************************************************************:EDOC*/
 void MainWindow::addCustomSeries()
 {
-	QString name = QInputDialog::getText(this, tr("Add Custom Series"), tr("Enter name for custom series:"));
-	if(!name.isEmpty())
+	bool ok = false;
+	QString name = QInputDialog::getText(this, tr("Add Custom Series"), tr("Enter name for custom series:"), QLineEdit::Normal, QString(), &ok);
+	if(ok && !name.isEmpty())
 	{
 		QSqlQuery query;
 		query.prepare("INSERT INTO document.custom_series(name) VALUES (?);");
@@ -513,8 +514,9 @@ void MainWindow::addCustomIssue()
 			QueryHelper("SELECT MAX(CAST(number AS INTEGER)) FROM issues WHERE series_id=?").arg(seriesId).exec().toInt(),
 			QueryHelper("SELECT MAX(CAST(number AS INTEGER)) FROM document.custom_issues WHERE series_id=?").arg(seriesId).exec().toInt());
 
-		QString number = QInputDialog::getText(this, tr("Add Custom Issue"), tr("Enter number for custom issue:"), QLineEdit::Normal, QString("%1").arg(currentMaxValue + 1));
-		if(!number.isEmpty())
+		bool ok = false;
+		QString number = QInputDialog::getText(this, tr("Add Custom Issue"), tr("Enter number for custom issue:"), QLineEdit::Normal, QString("%1").arg(currentMaxValue + 1), &ok);
+		if(ok && !number.isEmpty())
 		{
 			QSqlQuery query;
 			query.prepare("INSERT INTO document.custom_issues(series_id,number) VALUES (?,?);");
