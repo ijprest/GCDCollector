@@ -64,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui(new Ui::MainWindow),
 		settings_("GCDCollector", "1.0"),
 		addComicsDialog(0),
-		m_connected(false)
+		connected_(false)
 {
 	// Initialize UI
   ui->setupUi(this);
@@ -112,9 +112,6 @@ MainWindow::MainWindow(QWidget *parent)
 	// Set the series-list to only show series we own
 	ui->comicTitles->setOnlyShowOwned(true);
 
-	// Restore UI state
-	readSettings();
-
 	// Handle command-line arguments
 	for(int i = 1; i < QCoreApplication::arguments().size(); ++i)
 	{
@@ -125,8 +122,11 @@ MainWindow::MainWindow(QWidget *parent)
 		}
 	}
 
+	// Restore UI state
+	readSettings();
+
 	// Make sure UI state is consistent
-	connected(m_connected);
+	connected(connected_);
 
 	// The window icon (used by the about box)
 	QIcon icon(":/GCDCollector/Resources/short-box.png");
@@ -223,7 +223,8 @@ bool MainWindow::connectDatabase(const QString& filename)
 
 	// refresh the main window's series list
 	refresh();
-	connected(m_connected = true);
+	connected(connected_ = true);
+	databaseFile_ = filename;
   return true;
 }
 
@@ -237,7 +238,7 @@ bool MainWindow::connectDatabase(const QString& filename)
 **********************************************************************:EDOC*/
 void MainWindow::closeDatabase()
 {
-	if(!m_connected)
+	if(!connected_)
 		return;
 
 	QSqlQuery detach;
@@ -248,7 +249,8 @@ void MainWindow::closeDatabase()
 		return;
 	}
 	setWindowTitle(tr("Comic Collector"));
-	connected(m_connected = false);
+	connected(connected_ = false);
+	databaseFile_.clear();
 
 	// Clear the filter text and refresh the UI
 	ui->filterEdit->setText("");
@@ -380,6 +382,9 @@ void MainWindow::writeSettings()
 	settings().setValue("showWanted", ui->action_ShowWantedIssues->isChecked());
 	settings().setValue("showSold", ui->action_ShowSoldIssues->isChecked());
 	settings().setValue("showUntracked", ui->action_ShowUntrackedIssues->isChecked());
+
+	// Save last opened file
+	settings().setValue("lastDatabase", databaseFile_);
 }
 
 void MainWindow::readSettings()
@@ -394,6 +399,14 @@ void MainWindow::readSettings()
 	ui->action_ShowWantedIssues->setChecked(settings().value("showWanted", true).toBool());
 	ui->action_ShowSoldIssues->setChecked(settings().value("showSold", true).toBool());
 	ui->action_ShowUntrackedIssues->setChecked(settings().value("showUntracked", false).toBool());
+
+	// Restore last opened file
+	if(!connected_) 
+	{
+		databaseFile_ = settings().value("lastDatabase",QString()).toString();
+		if(!databaseFile_.isEmpty())
+			connectDatabase(databaseFile_);
+	}
 }
 
 
@@ -519,18 +532,19 @@ void MainWindow::addCustomIssue()
 		QString number = QInputDialog::getText(this, tr("Add Custom Issue"), tr("Enter number for custom issue:"), QLineEdit::Normal, QString("%1").arg(currentMaxValue + 1), &ok);
 		if(ok && !number.isEmpty())
 		{
-			QRegExp re("(\\d+)-(\\d+)");
+			QRegExp re("(.*:?)(\\d+)-(\\d+)");
 			if(re.exactMatch(number))
 			{
 				// Adding a range of numbers
 				QSqlDatabase db = QSqlDatabase::database();
 				if(db.isValid() && db.transaction())
 				{
-					int start = re.cap(1).toInt();
-					int end = re.cap(2).toInt();
+					QString volume = re.cap(1);
+					int start = re.cap(2).toInt();
+					int end = re.cap(3).toInt();
 					for(int i = start; i <= end; ++i) 
 					{
-						number.setNum(i);
+						number = QString("%1%2").arg(volume).arg(i);
 						addSingleCustomIssue(seriesId, number);
 					}
 				}

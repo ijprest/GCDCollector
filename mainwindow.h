@@ -83,7 +83,8 @@ private:
 	QSettings settings_;
 	AddComics* addComicsDialog;
   Ui::MainWindow *ui;
-	bool m_connected;
+	bool connected_;
+	QString databaseFile_;
 };
 
 #endif // MAINWINDOW_H
