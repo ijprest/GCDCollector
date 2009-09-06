@@ -68,6 +68,8 @@ private:
   bool connectDatabase(const QString& filename);
 	bool executeSql(QString sql, QSqlDatabase& db = QSqlDatabase::database());
 
+	void refresh();
+
 	void writeSettings();
 	void readSettings();
 	QSettings& settings() { return settings_; }

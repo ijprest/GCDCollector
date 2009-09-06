@@ -143,17 +143,20 @@ void CoverViewer::setImageId(int id)
 	scaledImage = NULL;
 
 	// Try to load the image from the database
-	QSqlQuery query;
-	query.prepare("SELECT data FROM document.images WHERE id=?;");
-	query.addBindValue(currentId);
-	query.exec();
-	if(query.next()) // only expecting one row
+	if(id)
 	{
-		QByteArray bytes = query.value(0).toByteArray();
-		if(bytes.length() > 0)
+		QSqlQuery query;
+		query.prepare("SELECT data FROM document.images WHERE id=?;");
+		query.addBindValue(currentId);
+		query.exec();
+		if(query.next()) // only expecting one row
 		{
-			image = new QImage();
-			image->loadFromData(bytes);
+			QByteArray bytes = query.value(0).toByteArray();
+			if(bytes.length() > 0)
+			{
+				image = new QImage();
+				image->loadFromData(bytes);
+			}
 		}
 	}
 	update();

@@ -206,8 +206,8 @@ bool MainWindow::connectDatabase(const QString& filename)
 	}
   setWindowTitle(tr("Comic Collector - %1").arg(filename));
 
-	// re-filter the main window's series list
-	ui->comicTitles->filterList(ui->filterEdit->text());
+	// refresh the main window's series list
+	refresh();
   return true;
 }
 
@@ -229,6 +229,17 @@ void MainWindow::closeDatabase()
 		return;
 	}
   setWindowTitle(tr("Comic Collector"));
+
+	// Clear the filter text and refresh the UI
+	ui->filterEdit->setText("");
+	// Clear the cover view
+	ui->coverLink->setText("");
+	ui->coverView->setImageId(0);
+	ui->coverProgress->setVisible(false);
+	// Clear the series detail view
+	ui->groupBox->setSeries(0);
+	// Refresh the rest of the UI
+	refresh();
 }
 
 
@@ -412,8 +423,8 @@ void MainWindow::addItems(const QList<int>& items)
 		}
 		db.commit();
 
-		// re-filter the main window's series list
-		ui->comicTitles->filterList(ui->filterEdit->text());
+		// refresh the main window's series list
+		refresh();
 	}
 }
 
@@ -500,6 +511,22 @@ void MainWindow::addCustomIssue()
 			ui->issueList->refresh();
 		}
 	}
+}
+
+
+/*SDOC:**********************************************************************
+
+	Name:			MainWindow::refresh
+
+	Action:		Helper function to refresh the main UI
+
+**********************************************************************:EDOC*/
+void MainWindow::refresh()
+{
+	// Refresh the filter-list
+	ui->comicTitles->filterList(ui->filterEdit->text());
+	// Refresh the issue-list
+	ui->issueList->refresh();
 }
 
 /* end of file */
