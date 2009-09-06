@@ -578,6 +578,12 @@ void ComicList::setModel(QAbstractItemModel* newModel)
 	if(model_) { delete model_; }
 	model_ = newModel;
 
+	// Force read the entire query.  It is considered unlikely that 
+	// there would ever be so many issues in a given series that this
+	// would become a performance problem.
+	while (model_->canFetchMore(QModelIndex()))
+		model_->fetchMore(QModelIndex());
+
 	QTableView::setModel(model_);
 	connect(selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChange(QModelIndex)));
 	setColumnHidden(ComicDataModel::colId, true);					// Hide the "id" column
@@ -585,6 +591,7 @@ void ComicList::setModel(QAbstractItemModel* newModel)
 	setColumnHidden(ComicDataModel::colNumber, true);			// Hide the "number" column
 	setColumnHidden(ComicDataModel::colSalePrice, true);	// Hide the "sale price" column
 	setColumnHidden(ComicDataModel::colOrderBy, true);		// Hide the ORDER BY column
+
 	resizeColumnsToContents();
 }
 
